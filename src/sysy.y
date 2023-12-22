@@ -85,7 +85,7 @@ FuncDef
 FuncType
   : INT {
     auto ast = new FuncTypeAST();
-    ast->func_type = "int";
+    ast->func_type = "i32";
     $$ = ast;
   }
   ;

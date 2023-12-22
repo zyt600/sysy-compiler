@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include "ast.h"
+#include <fstream>
 
 using namespace std;
 
@@ -34,7 +35,13 @@ int main(int argc, const char *argv[]) {
 
   // 输出解析得到的 AST, 其实就是个字符串
   // cout << *ast << endl;
-  ast->Dump();
+  string s=ast->DumpKoopa();
+  cout<<s;
+  ofstream file(output);
+  if (file.is_open()) {
+        file << s;  // 将字符串 str 写入到文件中
+        file.close(); // 关闭文件
+  }
   cout << endl;
   return 0;
 }

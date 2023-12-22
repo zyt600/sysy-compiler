@@ -8,6 +8,7 @@ class BaseAST {
  public:
   virtual ~BaseAST() = default;
   virtual void Dump() const = 0;
+  virtual std::string DumpKoopa() const = 0;
 };
 
 // CompUnit 是 BaseAST
@@ -20,6 +21,10 @@ class CompUnitAST : public BaseAST {
     std::cout << "CompUnitAST { ";
     func_def->Dump();
     std::cout << " }";
+  }
+
+  std::string DumpKoopa() const override {
+    return func_def->DumpKoopa();
   }
 };
 
@@ -37,6 +42,10 @@ class FuncDefAST : public BaseAST {
     block->Dump();
     std::cout << " }";
   }
+
+  std::string DumpKoopa() const override {
+    return "fun @" + ident + "(): " +func_type->DumpKoopa()+ " {\n%entry: \n" + block->DumpKoopa()+"}";
+  }
 };
 
 class FuncTypeAST : public BaseAST {
@@ -45,6 +54,10 @@ class FuncTypeAST : public BaseAST {
 
   void Dump() const override {
     std::cout << "FuncTypeAST { " << func_type << " }";
+  }
+
+  std::string DumpKoopa() const override {
+    return func_type;
   }
 };
 
@@ -57,6 +70,10 @@ class BlockAST : public BaseAST {
     stmt->Dump();
     std::cout << " }";
   }
+
+  std::string DumpKoopa() const override {
+    return stmt->DumpKoopa();
+  }
 };
 
 class StmtAST : public BaseAST {
@@ -67,6 +84,10 @@ class StmtAST : public BaseAST {
     std::cout << "StmtAST { ";
     std::cout << num;
     std::cout << " }";
+  }
+
+  std::string DumpKoopa() const override {
+    return "ret " + std::to_string(num) + "\n";
   }
 };
 
