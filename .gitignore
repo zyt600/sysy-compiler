@@ -3,3 +3,5 @@
 /mydebug
 .vscode
 test.sh
+src/koopa.h
+hello.koopa
