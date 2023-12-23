@@ -43,7 +43,7 @@ using namespace std;
 
 // 非终结符的类型定义
 // %type <str_val> FuncDef FuncType Block Stmt Number
-%type <ast_val> FuncDef FuncType Block Stmt
+%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp
 %type <int_val> Number
 
 %%
@@ -99,9 +99,9 @@ Block
   ;
 
 Stmt
-  : RETURN Number ';' {
+  : RETURN Exp ';' {
     auto ast = new StmtAST();
-    ast->num = $2;
+    ast->exp = unique_ptr<BaseAST>($2);
     $$ = ast;
   }
   ;
@@ -112,6 +112,59 @@ Number
   }
   ;
 
+Exp
+  : UnaryExp {
+    auto ast = new ExpAST();
+    ast->unary_exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+// UnaryExp ::= PrimaryExp | UnaryOp UnaryExp;   这里我采用 只为 ::= 左侧的符号设计一种 AST, 使其涵盖 ::= 右侧的所有规则
+UnaryExp
+  : PrimaryExp {
+    auto ast = new UnaryExpAST(UnaryExpAST::Kind::PrimaryExp);
+    ast->primary_exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | UnaryOp UnaryExp {
+    auto ast = new UnaryExpAST(UnaryExpAST::Kind::UnaryOp_UnaryExp);
+    ast->unary_op= unique_ptr<BaseAST>($1);
+    ast->unary_exp = unique_ptr<BaseAST>($2);
+    $$ = ast;
+  }
+  ;
+
+UnaryOp
+  : '+' {
+    auto ast = new UnaryOpAST();
+    ast->op = "+";
+    $$ = ast;
+  }
+  | '-' {
+    auto ast = new UnaryOpAST();
+    ast->op = "-";
+    $$ = ast;
+  }
+  | '!' {
+    auto ast = new UnaryOpAST();
+    ast->op = "!";
+    $$ = ast;
+  }
+  ;
+
+PrimaryExp
+  : Number {
+    auto ast = new PrimaryExpAST(PrimaryExpAST::Kind::Number);
+    ast->num = $1;
+    $$ = ast;
+  }
+  | '(' Exp ')' {
+    auto ast = new PrimaryExpAST(PrimaryExpAST::Kind::Exp);
+    ast->exp = unique_ptr<BaseAST>($2);
+    $$ = ast;
+  }
+  ;
 %%
 
 // 定义错误处理函数, 其中第二个参数是错误信息

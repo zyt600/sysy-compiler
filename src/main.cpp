@@ -60,7 +60,7 @@ int main(int argc, const char *argv[]) {
     cout<<"--- riscv mode ---\n";
     koopa_program_t program;
     koopa_error_code_t ret = koopa_parse_from_string(s.c_str(), &program);
-    assert(ret == KOOPA_EC_SUCCESS);  
+    assert(ret == KOOPA_EC_SUCCESS);
 
     koopa_raw_program_builder_t builder = koopa_new_raw_program_builder();
     koopa_raw_program_t raw = koopa_build_raw_program(builder, program);
