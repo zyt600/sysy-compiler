@@ -80,19 +80,32 @@ int main(int argc, const char *argv[]) {
           assert(bb->insts.kind == KOOPA_RSIK_VALUE);
           koopa_raw_value_t value = (koopa_raw_value_t) bb->insts.buffer[k];
 
-          // 示例程序中, 你得到的 value 一定是一条 return 指令
-          assert(value->kind.tag == KOOPA_RVT_RETURN);
-          // 于是我们可以按照处理 return 指令的方式处理这个 value
-          // return 指令中, value 代表返回值
-          koopa_raw_value_t ret_value = value->kind.data.ret.value;
-          // 示例程序中, ret_value 一定是一个 integer
-          assert(ret_value->kind.tag == KOOPA_RVT_INTEGER);
-          // 于是我们可以按照处理 integer 的方式处理 ret_value
-          // integer 中, value 代表整数的数值
-          int32_t int_val = ret_value->kind.data.integer.value;
-          // 示例程序中, 这个数值一定是 0
-          // assert(int_val == 0);
-          rsicV_code+="  li a0, "+to_string(int_val)+"\n  ret\n";
+          switch (value->kind.tag)
+          {
+          case KOOPA_RVT_RETURN:{
+            // 示例程序中, 你得到的 value 一定是一条 return 指令
+            // assert(value->kind.tag == KOOPA_RVT_RETURN);
+            // 于是我们可以按照处理 return 指令的方式处理这个 value
+            // return 指令中, value 代表返回值
+            koopa_raw_value_t ret_value = value->kind.data.ret.value;
+            // 示例程序中, ret_value 一定是一个 integer
+            assert(ret_value->kind.tag == KOOPA_RVT_INTEGER);
+            // 于是我们可以按照处理 integer 的方式处理 ret_value
+            // integer 中, value 代表整数的数值
+            int32_t int_val = ret_value->kind.data.integer.value;
+            // 示例程序中, 这个数值一定是 0
+            // assert(int_val == 0);
+            rsicV_code+="  li a0, "+to_string(int_val)+"\n  ret\n";
+            break;
+          }
+          case KOOPA_RVT_BINARY:{
+            koopa_raw_binary_t binary = value->kind.data.binary;
+            
+          }
+          default:
+            break;
+          }
+          
         }
       }
     }

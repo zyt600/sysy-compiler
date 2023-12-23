@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 
 class GlobalCounter {
 private:
@@ -31,3 +32,7 @@ public:
         return ++value;
     }
 };
+
+// 获取全局用到了第几个临时数字变量，转成字符串
+std::string GetNext();
+std::string GetCurrent();
