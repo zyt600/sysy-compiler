@@ -37,13 +37,13 @@ using namespace std;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN
+%token INT RETURN GE LE EQ NE AND OR
 %token <str_val> IDENT
 %token <int_val> INT_CONST
 
 // 非终结符的类型定义
 // %type <str_val> FuncDef FuncType Block Stmt Number
-%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp MulExp AddExp
+%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp MulExp AddExp LOrExp LAndExp EqExp RelExp 
 %type <int_val> Number
 
 %%
@@ -113,14 +113,13 @@ Number
   ;
 
 Exp
-  : AddExp {
+  : LOrExp {
     auto ast = new ExpAST();
-    ast->add_exp = unique_ptr<BaseAST>($1);
+    ast->l_or_exp = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
   ;
 
-// UnaryExp ::= PrimaryExp | UnaryOp UnaryExp;   这里我采用 只为 ::= 左侧的符号设计一种 AST, 使其涵盖 ::= 右侧的所有规则
 UnaryExp
   : PrimaryExp {
     auto ast = new UnaryExpAST(UnaryExpAST::Kind::PrimaryExp);
@@ -210,6 +209,87 @@ MulExp
     ast->unary_exp = unique_ptr<BaseAST>($3);
     $$ = ast;
   }
+  ;
+
+LOrExp
+  : LAndExp {
+    auto ast = new LOrExpAST(LOrExpAST::Kind::LAndExp);
+    ast->l_and_exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | LOrExp OR LAndExp {
+    auto ast = new LOrExpAST(LOrExpAST::Kind::LOrExp_LAndExp);
+    ast->l_or_exp = unique_ptr<BaseAST>($1);
+    ast->l_and_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  ;
+
+LAndExp
+  : EqExp {
+    auto ast = new LAndExpAST(LAndExpAST::Kind::EqExp);
+    ast->eq_exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | LAndExp AND EqExp {
+    auto ast = new LAndExpAST(LAndExpAST::Kind::LAndExp_EqExp);
+    ast->l_and_exp = unique_ptr<BaseAST>($1);
+    ast->eq_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  ;
+
+EqExp
+  : RelExp {
+    auto ast = new EqExpAST(EqExpAST::Kind::RelExp);
+    ast->rel_exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | EqExp EQ RelExp {
+    auto ast = new EqExpAST(EqExpAST::Kind::EqExp_EqEq_RelExp);
+    ast->eq_exp = unique_ptr<BaseAST>($1);
+    ast->rel_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  | EqExp NE RelExp {
+    auto ast = new EqExpAST(EqExpAST::Kind::EqExp_NotEq_RelExp);
+    ast->eq_exp = unique_ptr<BaseAST>($1);
+    ast->rel_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  ;
+
+RelExp
+  : AddExp {
+    auto ast = new RelExpAST(RelExpAST::Kind::AddExp);
+    ast->add_exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | RelExp '<' AddExp {
+    auto ast = new RelExpAST(RelExpAST::Kind::RelExp_LT_AddExp);
+    ast->rel_exp = unique_ptr<BaseAST>($1);
+    ast->add_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  | RelExp '>' AddExp {
+    auto ast = new RelExpAST(RelExpAST::Kind::RelExp_GT_AddExp);
+    ast->rel_exp = unique_ptr<BaseAST>($1);
+    ast->add_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  | RelExp LE AddExp {
+    auto ast = new RelExpAST(RelExpAST::Kind::RelExp_LE_AddExp);
+    ast->rel_exp = unique_ptr<BaseAST>($1);
+    ast->add_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  | RelExp GE AddExp {
+    auto ast = new RelExpAST(RelExpAST::Kind::RelExp_GE_AddExp);
+    ast->rel_exp = unique_ptr<BaseAST>($1);
+    ast->add_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  ;
 %%
 
 // 定义错误处理函数, 其中第二个参数是错误信息

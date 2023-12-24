@@ -15,7 +15,6 @@ class BaseAST {
 
 class CompUnitAST : public BaseAST {
  public:
-  // 用智能指针管理对象
   std::unique_ptr<BaseAST> func_def;
 
   std::string DumpKoopa() override {
@@ -62,7 +61,7 @@ class StmtAST : public BaseAST {
 
 class ExpAST : public BaseAST {
  public:
-  std::unique_ptr<BaseAST> add_exp;
+  std::unique_ptr<BaseAST> l_or_exp;
   std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
   std::string DumpKoopa() override;
@@ -147,4 +146,77 @@ class AddExpAST : public BaseAST {
   
   std::string DumpKoopa() override ;
 };
+
+class LOrExpAST : public BaseAST {
+ public:
+  enum class Kind {
+    LAndExp = 0,
+    LOrExp_LAndExp
+  };
+
+  Kind kind;
+  std::unique_ptr<BaseAST> l_and_exp, l_or_exp;
+  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+
+  LOrExpAST() = default;
+  LOrExpAST(Kind k) : kind(k) {}
+  
+  std::string DumpKoopa() override ;
+};
+
+class LAndExpAST : public BaseAST {
+ public:
+  enum class Kind {
+    EqExp = 0,
+    LAndExp_EqExp
+  };
+
+  Kind kind;
+  std::unique_ptr<BaseAST> eq_exp, l_and_exp;
+  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+
+  LAndExpAST() = default;
+  LAndExpAST(Kind k) : kind(k) {}
+  
+  std::string DumpKoopa() override ;
+};
+
+class EqExpAST : public BaseAST {
+ public:
+  enum class Kind {
+    RelExp = 0,
+    EqExp_EqEq_RelExp,
+    EqExp_NotEq_RelExp
+  };
+
+  Kind kind;
+  std::unique_ptr<BaseAST> rel_exp, eq_exp;
+  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+
+  EqExpAST() = default;
+  EqExpAST(Kind k) : kind(k) {}
+  
+  std::string DumpKoopa() override ;
+};
+
+class RelExpAST : public BaseAST {
+ public:
+  enum class Kind {
+    AddExp = 0,
+    RelExp_LT_AddExp,
+    RelExp_GT_AddExp,
+    RelExp_LE_AddExp,
+    RelExp_GE_AddExp
+  };
+
+  Kind kind;
+  std::unique_ptr<BaseAST> add_exp, rel_exp;
+  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+
+  RelExpAST() = default;
+  RelExpAST(Kind k) : kind(k) {}
+  
+  std::string DumpKoopa() override ;
+};
+
 
