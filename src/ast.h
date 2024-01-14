@@ -3,68 +3,107 @@
 #include <string>
 #include <iostream>
 #include "GlobalCounter.h"
-
+#include <vector>
+#include <deque>
+using namespace std;
 
 // 所有 AST 的基类
 class BaseAST {
  public:
   virtual ~BaseAST() = default;
   virtual void Dump() const {};
-  virtual std::string DumpKoopa() = 0;
+  virtual string DumpKoopa() = 0;
 };
 
 class CompUnitAST : public BaseAST {
  public:
-  std::unique_ptr<BaseAST> func_def;
+  unique_ptr<BaseAST> func_def;
 
-  std::string DumpKoopa() override {
+  string DumpKoopa() override {
     return func_def->DumpKoopa();
   }
 };
 
 class FuncDefAST : public BaseAST {
  public:
-  std::unique_ptr<BaseAST> func_type;
-  std::string ident;
-  std::unique_ptr<BaseAST> block;
+  unique_ptr<BaseAST> func_type;
+  string ident;
+  unique_ptr<BaseAST> block;
 
-  std::string DumpKoopa() override {
+  string DumpKoopa() override {
     return "fun @" + ident + "(): " +func_type->DumpKoopa()+ " {\n" + block->DumpKoopa()+"}\n";
   }
 };
 
 class FuncTypeAST : public BaseAST {
  public:
-  std::string func_type;
+  string func_type;
 
-  std::string DumpKoopa() override {
+  string DumpKoopa() override {
     return func_type;
   }
 };
 
 class BlockAST : public BaseAST {
  public:
-  std::unique_ptr<BaseAST> stmt;
+  unique_ptr<BaseAST> multi_block_items;
 
-  std::string DumpKoopa() override {
-    return "%entry: \n" + stmt->DumpKoopa();
+  string DumpKoopa() override {
+    string code="%entry: \n";
+    code += multi_block_items->DumpKoopa();
+    return code;
+  }
+};
+
+class BlockItemAST : public BaseAST {
+ public:
+  enum class Kind {
+    Stmt = 0,
+    Decl
+  };
+  unique_ptr<BaseAST> stmt;
+  unique_ptr<BaseAST> decl;
+  Kind kind;
+
+  BlockItemAST() = default;
+  BlockItemAST(Kind k) : kind(k) {}
+
+  string DumpKoopa() override {
+    if(kind == Kind::Stmt){
+      return stmt->DumpKoopa();
+    }
+    else{
+      return decl->DumpKoopa();
+    }
+  }
+};
+
+class MutiBlockItemAST : public BaseAST {
+ public:
+  deque<unique_ptr<BaseAST> > blockitems;
+  string DumpKoopa() override {
+    string code;
+    for(auto &item : blockitems){
+      code += item->DumpKoopa();
+    }
+    return code;
   }
 };
 
 class StmtAST : public BaseAST {
  public:
-  std::unique_ptr<BaseAST> exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
 
 class ExpAST : public BaseAST {
  public:
-  std::unique_ptr<BaseAST> l_or_exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> l_or_exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
-  std::string DumpKoopa() override;
+  string DumpKoopa() override;
 };
 
 class UnaryExpAST : public BaseAST {
@@ -74,38 +113,39 @@ class UnaryExpAST : public BaseAST {
     UnaryOp_UnaryExp
   };
   Kind kind;
-  std::unique_ptr<BaseAST> primary_exp;
-  std::unique_ptr<BaseAST> unary_op, unary_exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> primary_exp;
+  unique_ptr<BaseAST> unary_op, unary_exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
   UnaryExpAST() = default;
   UnaryExpAST(Kind k) : kind(k) {}
 
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
 
 class PrimaryExpAST : public BaseAST {
  public:
   enum class Kind {
     Exp = 0,
-    Number
+    Number,
+    LVal 
   };
   Kind kind;
-  std::unique_ptr<BaseAST> exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> exp, l_val;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
   int num;
 
   PrimaryExpAST() = default;
   PrimaryExpAST(Kind k) : kind(k) {}
 
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
 
 class UnaryOpAST : public BaseAST {
  public:
-  std::string op;
+  string op;
 
-  std::string DumpKoopa() override {
+  string DumpKoopa() override {
     return op;
   }
 };
@@ -120,13 +160,13 @@ class MulExpAST : public BaseAST {
   };
 
   Kind kind;
-  std::unique_ptr<BaseAST> unary_exp, mul_exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> unary_exp, mul_exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
   MulExpAST() = default;
   MulExpAST(Kind k) : kind(k) {}
   
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
 
 class AddExpAST : public BaseAST {
@@ -138,13 +178,13 @@ class AddExpAST : public BaseAST {
   };
 
   Kind kind;
-  std::unique_ptr<BaseAST> mul_exp, add_exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> mul_exp, add_exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
   AddExpAST() = default;
   AddExpAST(Kind k) : kind(k) {}
   
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
 
 class LOrExpAST : public BaseAST {
@@ -155,13 +195,13 @@ class LOrExpAST : public BaseAST {
   };
 
   Kind kind;
-  std::unique_ptr<BaseAST> l_and_exp, l_or_exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> l_and_exp, l_or_exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
   LOrExpAST() = default;
   LOrExpAST(Kind k) : kind(k) {}
   
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
 
 class LAndExpAST : public BaseAST {
@@ -172,13 +212,13 @@ class LAndExpAST : public BaseAST {
   };
 
   Kind kind;
-  std::unique_ptr<BaseAST> eq_exp, l_and_exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> eq_exp, l_and_exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
   LAndExpAST() = default;
   LAndExpAST(Kind k) : kind(k) {}
   
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
 
 class EqExpAST : public BaseAST {
@@ -190,13 +230,13 @@ class EqExpAST : public BaseAST {
   };
 
   Kind kind;
-  std::unique_ptr<BaseAST> rel_exp, eq_exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> rel_exp, eq_exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
   EqExpAST() = default;
   EqExpAST(Kind k) : kind(k) {}
   
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
 
 class RelExpAST : public BaseAST {
@@ -210,13 +250,73 @@ class RelExpAST : public BaseAST {
   };
 
   Kind kind;
-  std::unique_ptr<BaseAST> add_exp, rel_exp;
-  std::string storeNum; // 标识这个表达式的值存在哪个临时变量里
+  unique_ptr<BaseAST> add_exp, rel_exp;
+  string storeNum; // 标识这个表达式的值存在哪个临时变量里
 
   RelExpAST() = default;
   RelExpAST(Kind k) : kind(k) {}
   
-  std::string DumpKoopa() override ;
+  string DumpKoopa() override ;
 };
+
+class DeclAST : public BaseAST {
+ public:
+  unique_ptr<BaseAST> const_decl;
+  
+  string DumpKoopa() override {
+    
+  }
+};
+
+class ConstDeclAST : public BaseAST {
+ public:
+  string b_type;
+  unique_ptr<BaseAST> const_defs;
+
+  string DumpKoopa() override {
+    
+  }
+};
+
+class ConstDefAST : public BaseAST {
+ public:
+  string ident;
+  unique_ptr<BaseAST> const_init_val;
+
+  string DumpKoopa() override {
+    
+  }
+};
+
+class MultiConstDefAST : public BaseAST {
+ public:
+  deque<unique_ptr<BaseAST> > const_defs;
+
+  string DumpKoopa() override {
+    
+  }
+};
+
+
+class ConstInitValAST : public BaseAST {
+ public:
+  unique_ptr<BaseAST> const_exp;
+
+  string DumpKoopa() override {
+    
+  }
+};
+
+class ConstExpAST : public BaseAST {
+ public:
+  unique_ptr<BaseAST> exp;
+
+  string DumpKoopa() override {
+    
+  }
+};
+
+
+
 
 

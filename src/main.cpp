@@ -7,7 +7,8 @@
 #include <fstream>
 #include "koopa.h"
 #include <string.h>
-
+#include "IR2RISCV.h"
+// RVT是raw value type的缩写嗷
 using namespace std;
 
 // 声明 lexer 的输入, 以及 parser 函数
@@ -48,7 +49,8 @@ int main(int argc, const char *argv[]) {
 
   // 输出解析得到的 AST, 其实就是个字符串
   // cout << *ast << endl;
-  string s=ast->DumpKoopa();
+  // string s=ast->DumpKoopa();
+  string s="fun @main(): i32 {\n%entry: \n%1 = mul 0, 3\n%2 = add 55, 5\n%3 = mul %1 , 7\n%4 = add %3, %1\nret %1\n}\n";
 
   if(strcmp(mode, "-koopa") == 0) {
     cout<<"--- koopa mode ---\n";
@@ -58,6 +60,7 @@ int main(int argc, const char *argv[]) {
   }
   else if(strcmp(mode, "-riscv") == 0){
     cout<<"--- riscv mode ---\n";
+    cout<<s<<endl;
     koopa_program_t program;
     koopa_error_code_t ret = koopa_parse_from_string(s.c_str(), &program);
     assert(ret == KOOPA_EC_SUCCESS);
@@ -66,50 +69,10 @@ int main(int argc, const char *argv[]) {
     koopa_raw_program_t raw = koopa_build_raw_program(builder, program);
 
     string rsicV_code;
+    rsicV_code.reserve(1000);
     rsicV_code = "  .text\n";
-    for (size_t i = 0; i < raw.funcs.len; ++i) {
-      assert(raw.funcs.kind == KOOPA_RSIK_FUNCTION);
-      koopa_raw_function_t func = (koopa_raw_function_t) raw.funcs.buffer[i];
-      string func_name = (func->name)+1;
-      rsicV_code += "  .globl "+func_name+"\n"+func_name+":\n";
-      
-      for (size_t j = 0; j < func->bbs.len; ++j) {
-        assert(func->bbs.kind == KOOPA_RSIK_BASIC_BLOCK);
-        koopa_raw_basic_block_t bb = (koopa_raw_basic_block_t) func->bbs.buffer[j];
-        for(size_t k=0; k<bb->insts.len; ++k){
-          assert(bb->insts.kind == KOOPA_RSIK_VALUE);
-          koopa_raw_value_t value = (koopa_raw_value_t) bb->insts.buffer[k];
-
-          switch (value->kind.tag)
-          {
-          case KOOPA_RVT_RETURN:{
-            // 示例程序中, 你得到的 value 一定是一条 return 指令
-            // assert(value->kind.tag == KOOPA_RVT_RETURN);
-            // 于是我们可以按照处理 return 指令的方式处理这个 value
-            // return 指令中, value 代表返回值
-            koopa_raw_value_t ret_value = value->kind.data.ret.value;
-            // 示例程序中, ret_value 一定是一个 integer
-            assert(ret_value->kind.tag == KOOPA_RVT_INTEGER);
-            // 于是我们可以按照处理 integer 的方式处理 ret_value
-            // integer 中, value 代表整数的数值
-            int32_t int_val = ret_value->kind.data.integer.value;
-            // 示例程序中, 这个数值一定是 0
-            // assert(int_val == 0);
-            rsicV_code+="  li a0, "+to_string(int_val)+"\n  ret\n";
-            break;
-          }
-          case KOOPA_RVT_BINARY:{
-            koopa_raw_binary_t binary = value->kind.data.binary;
-            
-          }
-          default:
-            break;
-          }
-          
-        }
-      }
-    }
-    cout<<rsicV_code;
+    Visit(raw, rsicV_code);
+    cout<<endl<<rsicV_code<<endl;
     file_write(rsicV_code, output);
   }
   else{

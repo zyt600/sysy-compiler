@@ -37,13 +37,13 @@ using namespace std;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN GE LE EQ NE AND OR
-%token <str_val> IDENT
+%token INT RETURN GE LE EQ NE AND OR CONST
+%token <str_val> IDENT 
 %token <int_val> INT_CONST
 
 // 非终结符的类型定义
-// %type <str_val> FuncDef FuncType Block Stmt Number
-%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp MulExp AddExp LOrExp LAndExp EqExp RelExp 
+%type <str_val> BType
+%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp MulExp AddExp LOrExp LAndExp EqExp RelExp MutiBlockItem BlockItem ConstDecl ConstDef ConstInitVal ConstExp Decl
 %type <int_val> Number
 
 %%
@@ -91,9 +91,34 @@ FuncType
   ;
 
 Block
-  : '{' Stmt '}' {
+  : '{' MutiBlockItem '}' {
     auto ast = new BlockAST();
-    ast->stmt = unique_ptr<BaseAST>($2);
+    ast->multi_block_items = unique_ptr<BaseAST>($2);
+    $$ = ast;
+  }
+  ;
+
+MutiBlockItem
+  : BlockItem MutiBlockItem {
+    auto ast = new MutiBlockItemAST();
+    ast->blockitems = move(unique_ptr<BaseAST>($2) -> blockitems);
+    ast.push_front(make_unique<BaseAST>($1));
+    $$ = ast;
+  }
+  | {
+    $$ = new MutiBlockItemAST();
+  }
+  ;
+
+BlockItem
+  : Stmt {
+    auto ast = new BlockItemAST(BlockItemAST::Kind::Stmt);
+    ast->stmt = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | Decl {
+    auto ast = new BlockItemAST(BlockItemAST::Kind::Decl);
+    ast->decl = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
   ;
@@ -161,6 +186,11 @@ PrimaryExp
   | '(' Exp ')' {
     auto ast = new PrimaryExpAST(PrimaryExpAST::Kind::Exp);
     ast->exp = unique_ptr<BaseAST>($2);
+    $$ = ast;
+  }
+  | LVal {
+    auto ast = new PrimaryExpAST(PrimaryExpAST::Kind::LVal);
+    ast->l_val = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
   ;
@@ -287,6 +317,74 @@ RelExp
     auto ast = new RelExpAST(RelExpAST::Kind::RelExp_GE_AddExp);
     ast->rel_exp = unique_ptr<BaseAST>($1);
     ast->add_exp = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  ;
+
+Decl
+  : ConstDecl {
+    auto ast = new DeclAST();
+    ast->const_decl = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+ConstDecl
+  : CONST BType ConstDef MultiConstDef ';' {
+    auto ast = new ConstDeclAST();
+    ast->b_type=*unique_ptr<string>($2);
+    ast->const_defs=unique_ptr<BaseAST>($4);
+    ast->const_defs.push_front(make_unique<BaseAST>($3));
+    $$ = ast;
+  }
+  ;
+
+MultiConstDef
+  : ',' ConstDef MultiConstDef {
+    auto ast = new MultiConstDefAST();
+    ast -> const_defs = move(unique_ptr<BaseAST>($3) -> const_defs);
+    ast.push_front(make_unique<BaseAST>($2));
+    $$ = ast;
+  }
+  | {
+    $$ = new MultiConstDefAST();
+  }
+
+BType
+  : INT {
+    $$ = new string("int");
+  }
+  ;
+
+ConstDef
+  : IDENT '=' ConstInitVal {
+    auto ast = new ConstDefAST();
+    ast->ident = *unique_ptr<string>($1);
+    ast->const_init_val = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  ;
+
+ConstInitVal
+  : ConstExp {
+    auto ast = new ConstInitValAST();
+    ast->const_exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+ConstExp
+  : Exp {
+    auto ast = new ConstExpAST();
+    ast->exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+LVal
+  : IDENT {
+    auto ast = new LValAST();
+    ast->ident = *unique_ptr<string>($1);
     $$ = ast;
   }
   ;

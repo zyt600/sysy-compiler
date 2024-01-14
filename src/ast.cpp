@@ -58,6 +58,9 @@ std::string PrimaryExpAST::DumpKoopa(){
             storeNum = GetNext();
             return storeNum + " = add 0, " + std::to_string(num) + "\n";
         }
+        case Kind::LVal:{
+            // TODO
+        }
     }
 }
 
