@@ -43,7 +43,7 @@ using namespace std;
 
 // 非终结符的类型定义
 %type <str_val> BType
-%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp MulExp AddExp LOrExp LAndExp EqExp RelExp MutiBlockItem BlockItem ConstDecl ConstDef ConstInitVal ConstExp Decl
+%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp MulExp AddExp LOrExp LAndExp EqExp RelExp MutiBlockItem BlockItem ConstDecl ConstDef ConstInitVal ConstExp Decl LVal MultiConstDef VarDecl VarDef InitVal MultiVarDef
 %type <int_val> Number
 
 %%
@@ -100,13 +100,12 @@ Block
 
 MutiBlockItem
   : BlockItem MutiBlockItem {
-    auto ast = new MutiBlockItemAST();
-    ast->blockitems = move(unique_ptr<BaseAST>($2) -> blockitems);
-    ast.push_front(make_unique<BaseAST>($1));
-    $$ = ast;
+    MutiBlockItemAST* ast = (MutiBlockItemAST*)$2;
+    ast->blockitems.push_front(unique_ptr<BaseAST>($1));
+    $$ = (BaseAST*)ast;
   }
   | {
-    $$ = new MutiBlockItemAST();
+    $$ = (BaseAST*)new MutiBlockItemAST();
   }
   ;
 
@@ -125,8 +124,14 @@ BlockItem
 
 Stmt
   : RETURN Exp ';' {
-    auto ast = new StmtAST();
+    auto ast = new StmtAST(StmtAST::Kind::RET_EXP);
     ast->exp = unique_ptr<BaseAST>($2);
+    $$ = ast;
+  }
+  | LVal '=' Exp ';' {
+    auto ast = new StmtAST(StmtAST::Kind::LVALeqEXP);
+    ast->l_val = unique_ptr<BaseAST>($1);
+    ast->exp = unique_ptr<BaseAST>($3);
     $$ = ast;
   }
   ;
@@ -323,8 +328,64 @@ RelExp
 
 Decl
   : ConstDecl {
-    auto ast = new DeclAST();
+    auto ast = new DeclAST(DeclAST::Kind::ConstDecl);
     ast->const_decl = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | VarDecl{
+    auto ast = new DeclAST(DeclAST::Kind::VarDecl);
+    ast->var_decl = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+VarDecl
+  : BType VarDef MultiVarDef';' {
+    auto ast = new VarDeclAST();
+    if(*$1=="int"){
+      nextEleType=SymbolTableElementType::INT;
+    }
+    else{
+      cout<<"error: unknown BType"<<endl;
+    }
+    ast->b_type=*unique_ptr<string>($1);
+    MultiVarDefAST* temp = (MultiVarDefAST*)$3;
+    temp->var_defs.push_front(unique_ptr<BaseAST>($2));
+    ast->var_defs=unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  ;
+
+MultiVarDef
+  : ',' VarDef MultiVarDef {
+    MultiVarDefAST* ast = (MultiVarDefAST*)$3;
+    ast-> var_defs.push_front(unique_ptr<BaseAST>($2));
+    $$ = (BaseAST*)ast;
+  }
+  | {
+    $$ = new MultiVarDefAST();
+  }
+  ;
+
+VarDef
+  : IDENT {
+    auto ast = new VarDefAST(VarDefAST::Kind::IDENT);
+    ast->type = nextEleType;
+    ast->ident = *unique_ptr<string>($1);
+    $$ = ast;
+  }
+  | IDENT '=' InitVal {
+    auto ast = new VarDefAST(VarDefAST::Kind::IDENT_InitVal);
+    ast->ident = *unique_ptr<string>($1);
+    ast->init_val = unique_ptr<BaseAST>($3);
+    $$ = ast;
+  }
+  ;
+
+InitVal
+  : Exp {
+    auto ast = new InitValAST();
+    ast->exp = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
   ;
@@ -332,19 +393,26 @@ Decl
 ConstDecl
   : CONST BType ConstDef MultiConstDef ';' {
     auto ast = new ConstDeclAST();
+    if(*$2=="int"){
+      nextEleType=SymbolTableElementType::INT;
+    }
+    else{
+      cout<<"error: unknown BType"<<endl;
+    }
+
     ast->b_type=*unique_ptr<string>($2);
-    ast->const_defs=unique_ptr<BaseAST>($4);
-    ast->const_defs.push_front(make_unique<BaseAST>($3));
+    MultiConstDefAST* temp = (MultiConstDefAST*)$4;
+    temp->const_defs.push_front(unique_ptr<BaseAST>($3));
+    ast->const_defs=unique_ptr<BaseAST>((BaseAST*)temp);
     $$ = ast;
   }
   ;
 
 MultiConstDef
   : ',' ConstDef MultiConstDef {
-    auto ast = new MultiConstDefAST();
-    ast -> const_defs = move(unique_ptr<BaseAST>($3) -> const_defs);
-    ast.push_front(make_unique<BaseAST>($2));
-    $$ = ast;
+    MultiConstDefAST* ast = (MultiConstDefAST*)$3;
+    ast-> const_defs.push_front(unique_ptr<BaseAST>($2));
+    $$ = (BaseAST*)ast;
   }
   | {
     $$ = new MultiConstDefAST();
@@ -359,6 +427,7 @@ BType
 ConstDef
   : IDENT '=' ConstInitVal {
     auto ast = new ConstDefAST();
+    ast->type = nextEleType;
     ast->ident = *unique_ptr<string>($1);
     ast->const_init_val = unique_ptr<BaseAST>($3);
     $$ = ast;

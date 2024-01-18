@@ -3,28 +3,24 @@
 #include <cassert>
 
 std::string ExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"ExpAST called"<<std::endl;
     std::string ret = l_or_exp->DumpKoopa();
-    LOrExpAST* lOrExp = dynamic_cast<LOrExpAST*> (l_or_exp.get());
-    if(lOrExp){
-        storeNum = lOrExp->storeNum;
-    }else{
-        printf("ExpAST dynamic_cast error\n");
-        assert(0);
-    }
+    storeNum = l_or_exp->storeNum;
     return ret;
 }
 
 std::string UnaryExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"UnaryExpAST called"<<std::endl;
     switch (kind) {
         case Kind::PrimaryExp:{
             std::string preIR_Code = primary_exp->DumpKoopa();
-            storeNum = dynamic_cast<PrimaryExpAST*> (primary_exp.get())->storeNum;
+            storeNum = primary_exp->storeNum;
             return preIR_Code;
         }
         case Kind::UnaryOp_UnaryExp:{
             std::string op=unary_op->DumpKoopa();
             std::string preIR_Code = unary_exp->DumpKoopa();
-            std::string lastStoreNum = dynamic_cast<UnaryExpAST*> (unary_exp.get())->storeNum;
+            std::string lastStoreNum = unary_exp->storeNum;
 
             if(op=="!"){
                 storeNum = GetNext();
@@ -39,17 +35,18 @@ std::string UnaryExpAST::DumpKoopa(){
                 return preIR_Code;
             }
             else{
-                return "error";
+                return "UnaryExpAST error\n";
             }
         }
     }
 }
 
 std::string PrimaryExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"PrimaryExpAST called"<<std::endl;
     switch (kind) {
         case Kind::Exp:{
             std::string ret = exp->DumpKoopa();
-            storeNum = dynamic_cast<ExpAST*> (exp.get())->storeNum;
+            storeNum = exp->storeNum;
             return ret;
         }
         case Kind::Number:{
@@ -59,94 +56,117 @@ std::string PrimaryExpAST::DumpKoopa(){
             return storeNum + " = add 0, " + std::to_string(num) + "\n";
         }
         case Kind::LVal:{
-            // TODO
+            LValAST* l_val_temp = dynamic_cast<LValAST*>(l_val.get());
+            storeNum = symbolTableNow->find(l_val_temp->ident);
+            string code =l_val->DumpKoopa();
+            return code;
         }
+        default:
+            return "PrimaryExpAST error\n";
     }
 }
 
 std::string MulExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"MulExpAST called"<<std::endl;
     switch (kind) {
         case Kind::UnaryExp:{
             std::string preIR_Code = unary_exp->DumpKoopa();
-            storeNum = dynamic_cast<UnaryExpAST*> (unary_exp.get())->storeNum;
+            storeNum = unary_exp->storeNum;
             return preIR_Code;
         }
         case Kind::MulExp_Mul_UnaryExp:{
             std::string preIR_Code = mul_exp->DumpKoopa();
             std::string preIR_Code2 = unary_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<MulExpAST*> (mul_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<UnaryExpAST*> (unary_exp.get())->storeNum;
+            std::string storeNum1=mul_exp->storeNum;
+            std::string storeNum2=unary_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = mul " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::MulExp_Div_UnaryExp:{
             std::string preIR_Code = mul_exp->DumpKoopa();
             std::string preIR_Code2 = unary_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<MulExpAST*> (mul_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<UnaryExpAST*> (unary_exp.get())->storeNum;
+            std::string storeNum1=mul_exp->storeNum;
+            std::string storeNum2=unary_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = div " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::MulExp_Mod_UnaryExp:{
             std::string preIR_Code = mul_exp->DumpKoopa();
             std::string preIR_Code2 = unary_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<MulExpAST*> (mul_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<UnaryExpAST*> (unary_exp.get())->storeNum;
+            std::string storeNum1=mul_exp->storeNum;
+            std::string storeNum2=unary_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = mod " + storeNum1 + ", " + storeNum2 + "\n";
         }
         default:
-            return "error";
+            return "MulExpAST error\n";
     }
 }
 
 std::string AddExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"AddExpAST called"<<std::endl;
     switch (kind) {
         case Kind::MulExp:{
             std::string preIR_Code = mul_exp->DumpKoopa();
-            storeNum = dynamic_cast<MulExpAST*> (mul_exp.get())->storeNum;
+            storeNum = mul_exp->storeNum;
             return preIR_Code;
         }
         case Kind::AddExp_Add_MulExp:{
             std::string preIR_Code = add_exp->DumpKoopa();
             std::string preIR_Code2 = mul_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<AddExpAST*> (add_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<MulExpAST*> (mul_exp.get())->storeNum;
+            std::string storeNum1=add_exp->storeNum;
+            std::string storeNum2=mul_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = add " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::AddExp_Sub_MulExp:{
             std::string preIR_Code = add_exp->DumpKoopa();
             std::string preIR_Code2 = mul_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<AddExpAST*> (add_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<MulExpAST*> (mul_exp.get())->storeNum;
+            std::string storeNum1=add_exp->storeNum;
+            std::string storeNum2=mul_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = sub " + storeNum1 + ", " + storeNum2 + "\n";
         }
         default:
-            return "error";
+            return "AddExpAST error\n";
     }
 }
 
 std::string StmtAST::DumpKoopa(){
-    std::string preIR_Code = exp->DumpKoopa();
-    storeNum = dynamic_cast<ExpAST*> (exp.get())->storeNum;
-    return preIR_Code + "ret " + storeNum + "\n";
+    if(DEBUG) std::cout<<"StmtAST called"<<std::endl;
+    switch (kind)
+    {
+    case Kind::RET_EXP:{
+        std::string preIR_Code = exp->DumpKoopa();
+        storeNum = exp->storeNum;
+        return preIR_Code + "ret " + storeNum + "\n";
+    }
+    case Kind::LVALeqEXP:{
+        std::string preIR_Code = exp->DumpKoopa();
+        LValAST* l_val_temp = dynamic_cast<LValAST*>(l_val.get());
+        symbolTableNow->change(l_val_temp->ident, exp->storeNum);
+        return preIR_Code;
+    }
+    default:
+        return "StmtAST error\n";
+    }
+    
 }
 
 std::string LOrExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"LOrExpAST called"<<std::endl;
     switch (kind)
     {
         case Kind::LAndExp:{
             std::string preIR_Code = l_and_exp->DumpKoopa();
-            storeNum = dynamic_cast<LAndExpAST*> (l_and_exp.get())->storeNum;
+            storeNum = l_and_exp->storeNum;
             return preIR_Code;
         }
         case Kind::LOrExp_LAndExp:{
             std::string preIR_Code = l_or_exp->DumpKoopa();
             std::string preIR_Code2 = l_and_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<LOrExpAST*> (l_or_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<LAndExpAST*> (l_and_exp.get())->storeNum;
+            std::string storeNum1=l_or_exp->storeNum;
+            std::string storeNum2=l_and_exp->storeNum;
             std::string v1,v2;
             v1=GetNext();
             v2=GetNext();
@@ -159,17 +179,18 @@ std::string LOrExpAST::DumpKoopa(){
 }
 
 std::string LAndExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"LAndExpAST called"<<std::endl;
     switch(kind){
         case Kind::EqExp:{
             std::string preIR_Code = eq_exp->DumpKoopa();
-            storeNum = dynamic_cast<EqExpAST*> (eq_exp.get())->storeNum;
+            storeNum = eq_exp->storeNum;
             return preIR_Code;
         }
         case Kind::LAndExp_EqExp:{
             std::string preIR_Code = l_and_exp->DumpKoopa();
             std::string preIR_Code2 = eq_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<LAndExpAST*> (l_and_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<EqExpAST*> (eq_exp.get())->storeNum;
+            std::string storeNum1=l_and_exp->storeNum;
+            std::string storeNum2=eq_exp->storeNum;
             std::string v1,v2;
             v1=GetNext();
             v2=GetNext();
@@ -182,25 +203,26 @@ std::string LAndExpAST::DumpKoopa(){
 }
 
 std::string EqExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"EqExpAST called"<<std::endl;
     switch(kind){
         case Kind::RelExp:{
             std::string preIR_Code = rel_exp->DumpKoopa();
-            storeNum = dynamic_cast<RelExpAST*> (rel_exp.get())->storeNum;
+            storeNum = rel_exp->storeNum;
             return preIR_Code;
         }
         case Kind::EqExp_EqEq_RelExp:{
             std::string preIR_Code = eq_exp->DumpKoopa();
             std::string preIR_Code2 = rel_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<EqExpAST*> (eq_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<RelExpAST*> (rel_exp.get())->storeNum;
+            std::string storeNum1=eq_exp->storeNum;
+            std::string storeNum2=rel_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = eq " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::EqExp_NotEq_RelExp:{
             std::string preIR_Code = eq_exp->DumpKoopa();
             std::string preIR_Code2 = rel_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<EqExpAST*> (eq_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<RelExpAST*> (rel_exp.get())->storeNum;
+            std::string storeNum1=eq_exp->storeNum;
+            std::string storeNum2=rel_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = ne " + storeNum1 + ", " + storeNum2 + "\n";
         }
@@ -208,41 +230,42 @@ std::string EqExpAST::DumpKoopa(){
 }
 
 std::string RelExpAST::DumpKoopa(){
+    if(DEBUG) std::cout<<"RelExpAST called"<<std::endl;
     switch(kind){
         case Kind::AddExp:{
             std::string preIR_Code = add_exp->DumpKoopa();
-            storeNum = dynamic_cast<AddExpAST*> (add_exp.get())->storeNum;
+            storeNum = add_exp->storeNum;
             return preIR_Code;
         }
         case Kind::RelExp_LT_AddExp:{
             std::string preIR_Code = rel_exp->DumpKoopa();
             std::string preIR_Code2 = add_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<RelExpAST*> (rel_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<AddExpAST*> (add_exp.get())->storeNum;
+            std::string storeNum1=rel_exp->storeNum;
+            std::string storeNum2=add_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = lt " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::RelExp_GT_AddExp:{
             std::string preIR_Code = rel_exp->DumpKoopa();
             std::string preIR_Code2 = add_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<RelExpAST*> (rel_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<AddExpAST*> (add_exp.get())->storeNum;
+            std::string storeNum1=rel_exp->storeNum;
+            std::string storeNum2=add_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = gt " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::RelExp_LE_AddExp:{
             std::string preIR_Code = rel_exp->DumpKoopa();
             std::string preIR_Code2 = add_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<RelExpAST*> (rel_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<AddExpAST*> (add_exp.get())->storeNum;
+            std::string storeNum1=rel_exp->storeNum;
+            std::string storeNum2=add_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = le " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::RelExp_GE_AddExp:{
             std::string preIR_Code = rel_exp->DumpKoopa();
             std::string preIR_Code2 = add_exp->DumpKoopa();
-            std::string storeNum1=dynamic_cast<RelExpAST*> (rel_exp.get())->storeNum;
-            std::string storeNum2=dynamic_cast<AddExpAST*> (add_exp.get())->storeNum;
+            std::string storeNum1=rel_exp->storeNum;
+            std::string storeNum2=add_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = ge " + storeNum1 + ", " + storeNum2 + "\n";
         }
@@ -250,3 +273,34 @@ std::string RelExpAST::DumpKoopa(){
 }
 
 
+std::string DeclAST::DumpKoopa(){
+    if(DEBUG) cout<<"DeclAST called"<<endl;
+    switch (kind)
+    {
+    case Kind::ConstDecl:
+        return const_decl->DumpKoopa();
+    case Kind::VarDecl:
+        return var_decl->DumpKoopa();
+    default:
+        return "DeclAST error\n";
+    }
+  }
+
+
+std::string VarDefAST::DumpKoopa(){
+    if(DEBUG) cout<<"VarDefAST called"<<endl;
+    switch (kind)
+    {
+    case Kind::IDENT:{
+        symbolTableNow->insert(ident,"not init");
+        return "";
+    }
+    case Kind::IDENT_InitVal:{
+        string code = init_val->DumpKoopa();
+        symbolTableNow->insert(ident,init_val->storeNum);
+        return code;
+    }
+    default:
+        return "VarDefAST error\n";
+    }
+}

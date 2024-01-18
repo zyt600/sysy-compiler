@@ -1,8 +1,10 @@
+// IR to risc-V
+
 #pragma once
 #include <iostream>
 #include "koopa.h"
 #include <cassert>
-#define DEBUG 1
+#include "debug.h"
 using namespace std;
 
 void Visit(koopa_raw_program_t raw, string &rsicV_code);
