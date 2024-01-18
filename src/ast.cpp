@@ -167,7 +167,6 @@ std::string StmtAST::DumpKoopa(){
     default:
         return "StmtAST error\n";
     }
-    
 }
 
 std::string LOrExpAST::DumpKoopa(){
@@ -193,6 +192,8 @@ std::string LOrExpAST::DumpKoopa(){
             std::string code_this_line3=storeNum + " = or " + v1 + ", " + v2 + "\n";
             return preIR_Code + preIR_Code2 + code_this_line + code_this_line2 + code_this_line3;
         }
+        default:
+            return "LOrExpAST error\n";
     }
 }
 

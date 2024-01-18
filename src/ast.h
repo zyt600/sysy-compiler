@@ -63,6 +63,10 @@ class BlockAST : public BaseAST {
   string DumpKoopa() override {
     if(DEBUG) cout<<"BlockAST called"<<endl;
     string code = multi_block_items->DumpKoopa();
+    // TODO：在没有ret的情况下，加上ret
+    if(code.find("ret") == string::npos){
+      code += "ret\n";
+    }
     return code;
   }
 };
