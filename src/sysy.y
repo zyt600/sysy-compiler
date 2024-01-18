@@ -134,6 +134,24 @@ Stmt
     ast->exp = unique_ptr<BaseAST>($3);
     $$ = ast;
   }
+  | RETURN ';' {
+    auto ast = new StmtAST(StmtAST::Kind::RET);
+    $$ = ast;
+  }
+  | ';' {
+    auto ast = new StmtAST(StmtAST::Kind::EMPTY);
+    $$ = ast;
+  }
+  | Exp ';' {
+    auto ast = new StmtAST(StmtAST::Kind::EXP);
+    ast->exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | Block {
+    auto ast = new StmtAST(StmtAST::Kind::BLOCK);
+    ast->block = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
   ;
 
 Number

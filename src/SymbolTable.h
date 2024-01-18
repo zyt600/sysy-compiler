@@ -14,6 +14,8 @@ class SymbolTable{
   public:
     SymbolTable* father=nullptr,*son=nullptr;
     unordered_map<string,string> symbolTable;  // 符号表，映射 符号名称——存符号的临时变量名
+
+    // 插入符号表。值得注意的是，这里查找重复符号仅查找本表，而不是递归查找
     bool insert(string name, string element){
       if(DEBUG){cout<<"SymbolTable insert "<<name<<" at "<<element<<endl;}
       if(symbolTable.find(name) != symbolTable.end()){
@@ -26,14 +28,20 @@ class SymbolTable{
 
     bool change(string name, string element){
       if(DEBUG){cout<<"SymbolTable change "<<name<<" to "<<element<<endl;}
-      if(symbolTable.find(name) == symbolTable.end()){
-        cout<<"Error: "<<name<<" not found"<<endl;
-        return false;
+      if(symbolTable.find(name) != symbolTable.end()){
+        symbolTable[name] = element;
+        return true;
+      }else{
+        if(father == nullptr){
+          cout<<"Error: "<<name<<" not found"<<endl;
+          return false;
+        }else{
+          return father->change(name,element);
+        }
       }
-      symbolTable[name] = element;
-      return true;
     }
 
+    // 递归查找符号表，看看某个符号是否被定义过
     string find(string name){
       if(symbolTable.find(name) != symbolTable.end()){
         return symbolTable[name];
@@ -46,3 +54,8 @@ class SymbolTable{
 };
 
 extern SymbolTable* symbolTableNow;
+
+SymbolTable* newSymbolTable();
+
+void deleteSymbolTable();
+

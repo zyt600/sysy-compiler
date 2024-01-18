@@ -147,6 +147,23 @@ std::string StmtAST::DumpKoopa(){
         symbolTableNow->change(l_val_temp->ident, exp->storeNum);
         return preIR_Code;
     }
+    case Kind::EMPTY:{
+        return "";
+    }
+    case Kind::EXP:{
+        std::string preIR_Code = exp->DumpKoopa();
+        // storeNum = exp->storeNum;
+        return preIR_Code;
+    }
+    case Kind::RET:{
+        return "ret\n";
+    }
+    case Kind::BLOCK:{
+        newSymbolTable();
+        std::string preIR_Code = block->DumpKoopa();
+        deleteSymbolTable();
+        return preIR_Code;
+    }
     default:
         return "StmtAST error\n";
     }

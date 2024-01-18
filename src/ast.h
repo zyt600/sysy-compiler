@@ -42,7 +42,7 @@ class FuncDefAST : public BaseAST {
 
   string DumpKoopa() override {
     if(DEBUG) cout<<"FuncDefAST called"<<endl;
-    return "fun @" + ident + "(): " +func_type->DumpKoopa()+ " {\n" + block->DumpKoopa()+"}\n";
+    return "fun @" + ident + "(): " +func_type->DumpKoopa()+ " {\n%entry:\n" + block->DumpKoopa()+"}\n";
   }
 };
 
@@ -62,8 +62,7 @@ class BlockAST : public BaseAST {
 
   string DumpKoopa() override {
     if(DEBUG) cout<<"BlockAST called"<<endl;
-    string code="%entry: \n";
-    code += multi_block_items->DumpKoopa();
+    string code = multi_block_items->DumpKoopa();
     return code;
   }
 };
@@ -109,10 +108,14 @@ class StmtAST : public BaseAST {
  public:
   enum class Kind {
     RET_EXP = 0,
-    LVALeqEXP // left_value = expression
+    LVALeqEXP, // left_value = expression
+    EMPTY, // 单纯只有一个分号
+    EXP, // 单纯只有一个表达式，会被求值 (即存在副作用), 但所求的值会被丢弃
+    RET, // 单纯只有一个 return;
+    BLOCK
   };
   Kind kind;
-  unique_ptr<BaseAST> exp, l_val;
+  unique_ptr<BaseAST> exp, l_val, block;
 
   string DumpKoopa() override ;
   StmtAST() = default;

@@ -8,6 +8,7 @@
 #include "koopa.h"
 #include <string.h>
 #include "IR2RISCV.h"
+#include <unistd.h>
 // RVT是raw value type的缩写嗷
 using namespace std;
 
@@ -24,17 +25,19 @@ void file_write(string s, const char* output){
   if (file.is_open()) {
         file << s;  // 将字符串 str 写入到文件中
         file.close(); // 关闭文件
+  }else{
+    cout<<"Error: cannot open file "<<output<<endl;
   }
 }
 
-void read_file_contents(FILE *file) { // 读取文件内容，并恢复文件指针
+string read_file_contents(FILE *file) { // 读取文件内容，并恢复文件指针
     std::fseek(file, 0, SEEK_END); // 移动到文件末尾
     long length = std::ftell(file); // 获取文件大小
     std::fseek(file, 0, SEEK_SET); // 回到文件开始
     std::string content(length, '\0'); // 创建足够大的字符串
     std::fread(&content[0], 1, length, file); // 读取文件内容到字符串
     rewind(file);
-    cout<<content<<endl;
+    return content;
 }
 
 int main(int argc, const char *argv[]) {
@@ -47,7 +50,14 @@ int main(int argc, const char *argv[]) {
 
   // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
   yyin = fopen(input, "r");
-  read_file_contents(yyin);
+  if(DEBUG){
+    string fstr=read_file_contents(yyin);
+    ofstream file("/root/compiler/mydebug/testoutput.txt", std::ios::app);// 注意，这是docker容器里面的路径，不是真的linux里的路径
+    file << fstr <<endl<<endl;  // 将字符串 str 写入到文件中
+    file.close(); // 关闭文件
+    cout<<fstr<<endl;
+  }
+  
   assert(yyin);
 
   // 调用 parser 函数, parser 函数会进一步调用 lexer 解析输入文件的
