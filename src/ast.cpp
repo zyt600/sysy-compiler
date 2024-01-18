@@ -173,7 +173,8 @@ std::string LOrExpAST::DumpKoopa(){
             std::string code_this_line = v1 + " = ge " + storeNum1 + ", 1 \n";
             std::string code_this_line2 = v2 + " = ge " + storeNum2 + ", 1 \n";
             storeNum = GetNext();
-            return preIR_Code + preIR_Code2 + code_this_line + code_this_line2 + storeNum + " = or " + v1 + ", " + v2 + "\n";
+            std::string code_this_line3=storeNum + " = or " + v1 + ", " + v2 + "\n";
+            return preIR_Code + preIR_Code2 + code_this_line + code_this_line2 + code_this_line3;
         }
     }
 }
@@ -194,10 +195,11 @@ std::string LAndExpAST::DumpKoopa(){
             std::string v1,v2;
             v1=GetNext();
             v2=GetNext();
-            std::string code_this_line = v1 + " = ge " + storeNum1 + ", 1 \n";
-            std::string code_this_line2 = v2 + " = ge " + storeNum2 + ", 1 \n";
+            std::string code_this_line = v1 + " = ne " + storeNum1 + ", 0 \n";
+            std::string code_this_line2 = v2 + " = ne " + storeNum2 + ", 0 \n";
             storeNum = GetNext();
-            return preIR_Code + preIR_Code2 + code_this_line + code_this_line2 + storeNum + " = and " + v1 + ", " + v2 + "\n";
+            std::string code_this_line3=storeNum + " = and " + v1 + ", " + v2 + "\n";
+            return preIR_Code + preIR_Code2 + code_this_line + code_this_line2 + code_this_line3;
         }
     }
 }
