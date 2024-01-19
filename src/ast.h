@@ -63,10 +63,6 @@ class BlockAST : public BaseAST {
   string DumpKoopa() override {
     if(DEBUG) cout<<"BlockAST called"<<endl;
     string code = multi_block_items->DumpKoopa();
-    // TODO：在没有ret的情况下，加上ret
-    if(code.find("ret") == string::npos){
-      code += "ret\n";
-    }
     return code;
   }
 };
@@ -111,6 +107,21 @@ class MutiBlockItemAST : public BaseAST {
 class StmtAST : public BaseAST {
  public:
   enum class Kind {
+    MATCHED = 0,
+    UNMATCHED,
+    NONIF
+  };
+  Kind kind;
+  unique_ptr<BaseAST> non_if_stmt, matched_stmt, unmatched_stmt;
+
+  string DumpKoopa() override ;
+  StmtAST() = default;
+  StmtAST(Kind k) : kind(k) {}
+};
+
+class NonIfStmtAST : public BaseAST {
+ public:
+  enum class Kind {
     RET_EXP = 0,
     LVALeqEXP, // left_value = expression
     EMPTY, // 单纯只有一个分号
@@ -122,8 +133,36 @@ class StmtAST : public BaseAST {
   unique_ptr<BaseAST> exp, l_val, block;
 
   string DumpKoopa() override ;
-  StmtAST() = default;
-  StmtAST(Kind k) : kind(k) {}
+  NonIfStmtAST() = default;
+  NonIfStmtAST(Kind k) : kind(k) {}
+};
+
+class MatchedStmtAST : public BaseAST {
+ public:
+  enum class Kind {
+    IF_ELSE = 0,
+    NON_IF
+  };
+  Kind kind;
+  unique_ptr<BaseAST> exp, matched_stmt1, matched_stmt2, non_if_stmt;
+
+  string DumpKoopa() override ;
+  MatchedStmtAST() = default;
+  MatchedStmtAST(Kind k) : kind(k) {}
+};
+
+class UnmatchedStmtAST : public BaseAST {
+ public:
+  enum class Kind {
+    IF = 0,
+    IF_ELSE
+  };
+  Kind kind;
+  unique_ptr<BaseAST> exp, matched_stmt, unmatched_stmt, stmt;
+
+  string DumpKoopa() override ;
+  UnmatchedStmtAST() = default;
+  UnmatchedStmtAST(Kind k) : kind(k) {}
 };
 
 class ExpAST : public BaseAST {

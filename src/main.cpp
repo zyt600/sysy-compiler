@@ -9,6 +9,7 @@
 #include <string.h>
 #include "IR2RISCV.h"
 #include <unistd.h>
+#include "koopaUtility.h"
 // RVT是raw value type的缩写嗷
 using namespace std;
 
@@ -72,6 +73,7 @@ int main(int argc, const char *argv[]) {
   string s=ast->DumpKoopa();
   // string s="fun @main(): i32 {\n%entry: \n%1 = mul 0, 3\n%2 = add 55, 5\n%3 = mul %1 , 7\n%4 = add %3, %1\nret %1\n}\n";
 
+  s = processIR(s);
   if(strcmp(mode, "-koopa") == 0) {
     cout<<"--- koopa mode ---\n";
     cout<<s;

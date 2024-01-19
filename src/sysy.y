@@ -37,13 +37,13 @@ using namespace std;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN GE LE EQ NE AND OR CONST
+%token INT RETURN GE LE EQ NE AND OR CONST IF ELSE
 %token <str_val> IDENT 
 %token <int_val> INT_CONST
 
 // 非终结符的类型定义
 %type <str_val> BType
-%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp MulExp AddExp LOrExp LAndExp EqExp RelExp MutiBlockItem BlockItem ConstDecl ConstDef ConstInitVal ConstExp Decl LVal MultiConstDef VarDecl VarDef InitVal MultiVarDef
+%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp UnaryOp PrimaryExp MulExp AddExp LOrExp LAndExp EqExp RelExp MutiBlockItem BlockItem ConstDecl ConstDef ConstInitVal ConstExp Decl LVal MultiConstDef VarDecl VarDef InitVal MultiVarDef NonIfStmt MatchedStmt UnmatchedStmt
 %type <int_val> Number
 
 %%
@@ -123,36 +123,86 @@ BlockItem
   ;
 
 Stmt
+  : NonIfStmt {
+    auto ast = new StmtAST(StmtAST::Kind::NONIF);
+    ast->non_if_stmt = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | MatchedStmt{
+    auto ast = new StmtAST(StmtAST::Kind::MATCHED);
+    ast->matched_stmt = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | UnmatchedStmt{
+    auto ast = new StmtAST(StmtAST::Kind::UNMATCHED);
+    ast->unmatched_stmt = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+NonIfStmt
   : RETURN Exp ';' {
-    auto ast = new StmtAST(StmtAST::Kind::RET_EXP);
+    auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::RET_EXP);
     ast->exp = unique_ptr<BaseAST>($2);
     $$ = ast;
   }
   | LVal '=' Exp ';' {
-    auto ast = new StmtAST(StmtAST::Kind::LVALeqEXP);
+    auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::LVALeqEXP);
     ast->l_val = unique_ptr<BaseAST>($1);
     ast->exp = unique_ptr<BaseAST>($3);
     $$ = ast;
   }
   | RETURN ';' {
-    auto ast = new StmtAST(StmtAST::Kind::RET);
+    auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::RET);
     $$ = ast;
   }
   | ';' {
-    auto ast = new StmtAST(StmtAST::Kind::EMPTY);
+    auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::EMPTY);
     $$ = ast;
   }
   | Exp ';' {
-    auto ast = new StmtAST(StmtAST::Kind::EXP);
+    auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::EXP);
     ast->exp = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
   | Block {
-    auto ast = new StmtAST(StmtAST::Kind::BLOCK);
+    auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::BLOCK);
     ast->block = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
   ;
+
+MatchedStmt
+  : IF '(' Exp ')' MatchedStmt ELSE MatchedStmt {
+    auto ast = new MatchedStmtAST(MatchedStmtAST::Kind::IF_ELSE);
+    ast->exp = unique_ptr<BaseAST>($3);
+    ast->matched_stmt1 = unique_ptr<BaseAST>($5);
+    ast->matched_stmt2 = unique_ptr<BaseAST>($7);
+    $$ = ast;
+  }
+  | NonIfStmt {
+    auto ast = new MatchedStmtAST(MatchedStmtAST::Kind::NON_IF);
+    ast->non_if_stmt = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+UnmatchedStmt
+  : IF '(' Exp ')' Stmt {
+    auto ast = new UnmatchedStmtAST(UnmatchedStmtAST::Kind::IF);
+    ast->exp = unique_ptr<BaseAST>($3);
+    ast->stmt = unique_ptr<BaseAST>($5);
+    $$ = ast;
+  }
+  | IF '(' Exp ')' MatchedStmt ELSE UnmatchedStmt {
+    auto ast = new UnmatchedStmtAST(UnmatchedStmtAST::Kind::IF_ELSE);
+    ast->exp = unique_ptr<BaseAST>($3);
+    ast->matched_stmt = unique_ptr<BaseAST>($5);
+    ast->unmatched_stmt = unique_ptr<BaseAST>($7);
+    $$ = ast;
+  }
+  ;
+
 
 Number
   : INT_CONST {
@@ -435,6 +485,7 @@ MultiConstDef
   | {
     $$ = new MultiConstDefAST();
   }
+  ;
 
 BType
   : INT {

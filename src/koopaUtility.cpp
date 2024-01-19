@@ -1,6 +1,7 @@
 #include <iostream>
 #include "koopa.h"
 #include "koopaUtility.h"
+#include<vector>
 using namespace std;
 
 
@@ -152,7 +153,71 @@ string raw_type_tag(int tag){
     }
 }
 
+bool startsWith(const std::string& str, const std::string& prefix) {
+    if (str.length() < prefix.length()) {
+        return false; // str 比 prefix 短，不可能以 prefix 开头
+    }
+    return str.compare(0, prefix.length(), prefix) == 0;
+}
 
+string trim(const string& str) {
+    size_t first = str.find_first_not_of(" \t\n\r\f\v");
+    if (first == string::npos)
+        return ""; // 字符串全是空白字符
+
+    size_t last = str.find_last_not_of(" \t\r\f\v"); // 找到最后一个不是空白字符的位置（排除\n)
+    return str.substr(first, (last - first + 1));
+}
+
+string processIR(string s){
+    vector<string> v;
+    istringstream iss(s);
+    string tmp;
+    while(getline(iss, tmp)){
+        v.push_back(trim(tmp));
+    }
+
+    // 删除连着的jump和ret
+    for(auto i=v.begin(); i!=v.end()-1; ){
+        if(startsWith(*i, "ret") && startsWith(*(i+1), "jump")){
+            i = v.erase(i+1);
+            continue;
+        }
+        i++;
+    }
+    
+    // 如果没有return，在最后加上
+    bool hasEntry = false, hasBr = false;
+    // int level=0;
+    for(auto i=v.begin(); i!=v.end()-1/* 这里暂时假设了没有嵌套花括号 */; i++){
+        // if((*i).find("{") != string::npos){
+        //     level++;
+        // }
+        if(startsWith(*i, "ret ")||startsWith(*i, "br ")||startsWith(*i, "jump ")){
+            hasBr = true;
+        }
+
+        if(startsWith(*i, "%entry")){
+            if(hasEntry&&!hasBr){ //这个基本块entry没有条件转移出口
+                i = v.insert(i, "ret");
+                i++;
+            }
+            hasEntry = true;
+            hasBr = false;
+        }
+        // if((*i).find("}") != string::npos){
+        //     level--;
+        // }
+    }
+
+
+    // 把字符串拼接回一起
+    string ret;
+    for(auto i=v.begin(); i!=v.end(); i++){
+        ret += *i + "\n";
+    }
+    return ret;
+}
 
 
 

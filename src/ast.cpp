@@ -1,34 +1,35 @@
 #include "ast.h"
 #include <iostream>
 #include <cassert>
+using namespace std;
 
-std::string ExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"ExpAST called"<<std::endl;
-    std::string ret = l_or_exp->DumpKoopa();
+string ExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"ExpAST called"<<endl;
+    string ret = l_or_exp->DumpKoopa();
     storeNum = l_or_exp->storeNum;
     return ret;
 }
 
-std::string UnaryExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"UnaryExpAST called"<<std::endl;
+string UnaryExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"UnaryExpAST called"<<endl;
     switch (kind) {
         case Kind::PrimaryExp:{
-            std::string preIR_Code = primary_exp->DumpKoopa();
+            string preIR_Code = primary_exp->DumpKoopa();
             storeNum = primary_exp->storeNum;
             return preIR_Code;
         }
         case Kind::UnaryOp_UnaryExp:{
-            std::string op=unary_op->DumpKoopa();
-            std::string preIR_Code = unary_exp->DumpKoopa();
-            std::string lastStoreNum = unary_exp->storeNum;
+            string op=unary_op->DumpKoopa();
+            string preIR_Code = unary_exp->DumpKoopa();
+            string lastStoreNum = unary_exp->storeNum;
 
             if(op=="!"){
                 storeNum = GetNext();
-                std::string code_this_line = "eq " + lastStoreNum + ", 0\n";
+                string code_this_line = "eq " + lastStoreNum + ", 0\n";
                 return preIR_Code + storeNum + " = " + code_this_line;
             }else if(op=="-"){
                 storeNum = GetNext();
-                std::string code_this_line = "sub 0, " + lastStoreNum + "\n";
+                string code_this_line = "sub 0, " + lastStoreNum + "\n";
                 return preIR_Code + storeNum + " = " + code_this_line;
             }else if(op=="+"){
                 storeNum = lastStoreNum;
@@ -41,19 +42,19 @@ std::string UnaryExpAST::DumpKoopa(){
     }
 }
 
-std::string PrimaryExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"PrimaryExpAST called"<<std::endl;
+string PrimaryExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"PrimaryExpAST called"<<endl;
     switch (kind) {
         case Kind::Exp:{
-            std::string ret = exp->DumpKoopa();
+            string ret = exp->DumpKoopa();
             storeNum = exp->storeNum;
             return ret;
         }
         case Kind::Number:{
             // TODO: 这里存疑，koopa怎么写的我也不确定；不过实在不行可以写成数字加0
-            // return GetNext() + " = " + std::to_string(num);
+            // return GetNext() + " = " + to_string(num);
             storeNum = GetNext();
-            return storeNum + " = add 0, " + std::to_string(num) + "\n";
+            return storeNum + " = add 0, " + to_string(num) + "\n";
         }
         case Kind::LVal:{
             LValAST* l_val_temp = dynamic_cast<LValAST*>(l_val.get());
@@ -66,35 +67,35 @@ std::string PrimaryExpAST::DumpKoopa(){
     }
 }
 
-std::string MulExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"MulExpAST called"<<std::endl;
+string MulExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"MulExpAST called"<<endl;
     switch (kind) {
         case Kind::UnaryExp:{
-            std::string preIR_Code = unary_exp->DumpKoopa();
+            string preIR_Code = unary_exp->DumpKoopa();
             storeNum = unary_exp->storeNum;
             return preIR_Code;
         }
         case Kind::MulExp_Mul_UnaryExp:{
-            std::string preIR_Code = mul_exp->DumpKoopa();
-            std::string preIR_Code2 = unary_exp->DumpKoopa();
-            std::string storeNum1=mul_exp->storeNum;
-            std::string storeNum2=unary_exp->storeNum;
+            string preIR_Code = mul_exp->DumpKoopa();
+            string preIR_Code2 = unary_exp->DumpKoopa();
+            string storeNum1=mul_exp->storeNum;
+            string storeNum2=unary_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = mul " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::MulExp_Div_UnaryExp:{
-            std::string preIR_Code = mul_exp->DumpKoopa();
-            std::string preIR_Code2 = unary_exp->DumpKoopa();
-            std::string storeNum1=mul_exp->storeNum;
-            std::string storeNum2=unary_exp->storeNum;
+            string preIR_Code = mul_exp->DumpKoopa();
+            string preIR_Code2 = unary_exp->DumpKoopa();
+            string storeNum1=mul_exp->storeNum;
+            string storeNum2=unary_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = div " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::MulExp_Mod_UnaryExp:{
-            std::string preIR_Code = mul_exp->DumpKoopa();
-            std::string preIR_Code2 = unary_exp->DumpKoopa();
-            std::string storeNum1=mul_exp->storeNum;
-            std::string storeNum2=unary_exp->storeNum;
+            string preIR_Code = mul_exp->DumpKoopa();
+            string preIR_Code2 = unary_exp->DumpKoopa();
+            string storeNum1=mul_exp->storeNum;
+            string storeNum2=unary_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = mod " + storeNum1 + ", " + storeNum2 + "\n";
         }
@@ -103,27 +104,27 @@ std::string MulExpAST::DumpKoopa(){
     }
 }
 
-std::string AddExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"AddExpAST called"<<std::endl;
+string AddExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"AddExpAST called"<<endl;
     switch (kind) {
         case Kind::MulExp:{
-            std::string preIR_Code = mul_exp->DumpKoopa();
+            string preIR_Code = mul_exp->DumpKoopa();
             storeNum = mul_exp->storeNum;
             return preIR_Code;
         }
         case Kind::AddExp_Add_MulExp:{
-            std::string preIR_Code = add_exp->DumpKoopa();
-            std::string preIR_Code2 = mul_exp->DumpKoopa();
-            std::string storeNum1=add_exp->storeNum;
-            std::string storeNum2=mul_exp->storeNum;
+            string preIR_Code = add_exp->DumpKoopa();
+            string preIR_Code2 = mul_exp->DumpKoopa();
+            string storeNum1=add_exp->storeNum;
+            string storeNum2=mul_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = add " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::AddExp_Sub_MulExp:{
-            std::string preIR_Code = add_exp->DumpKoopa();
-            std::string preIR_Code2 = mul_exp->DumpKoopa();
-            std::string storeNum1=add_exp->storeNum;
-            std::string storeNum2=mul_exp->storeNum;
+            string preIR_Code = add_exp->DumpKoopa();
+            string preIR_Code2 = mul_exp->DumpKoopa();
+            string storeNum1=add_exp->storeNum;
+            string storeNum2=mul_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = sub " + storeNum1 + ", " + storeNum2 + "\n";
         }
@@ -132,17 +133,94 @@ std::string AddExpAST::DumpKoopa(){
     }
 }
 
-std::string StmtAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"StmtAST called"<<std::endl;
+string StmtAST::DumpKoopa(){
+    if(DEBUG) cout<<"StmtAST called"<<endl;
+    switch (kind)
+    {
+    case Kind::NONIF:{
+        return non_if_stmt->DumpKoopa();
+    }
+    case Kind::MATCHED:{
+        return matched_stmt->DumpKoopa();
+    }
+    case Kind::UNMATCHED:{
+        return unmatched_stmt->DumpKoopa();
+    }
+    default:
+        return "StmtAST error\n";
+    }
+}
+
+string MatchedStmtAST::DumpKoopa() {
+    if(DEBUG) cout<<"MatchedStmt called"<<endl;
+    switch (kind)
+    {
+    case Kind::IF_ELSE:{  // if expr -> MatchedStmtAST else MatchedStmtAST
+        string preIR_Code = exp->DumpKoopa();
+        string expStoreNum=exp->storeNum;
+        string entrySuccess="%entry" + to_string(GlobalCounter::GetInstance().GetNext());
+        string entryFail="%entry" + to_string(GlobalCounter::GetInstance().GetNext());
+        string entryNext="%entry" + to_string(GlobalCounter::GetInstance().GetNext()); // 结束了if lese的下一条指令
+        string code_this_line = "br " + expStoreNum + ", " + entrySuccess + ", " + entryFail + "\n";
+        string code_this_line2 = entrySuccess + ":\n" + matched_stmt1->DumpKoopa() + "jump "+ entryNext;
+        string code_this_line3 = entryFail + ":\n" + matched_stmt2->DumpKoopa() + "jump "+ entryNext;
+        // TODO: 这里的entryFail + "\n"其实是有点问题的，没考虑到如果if后面没有语句的情况
+        return preIR_Code + code_this_line + code_this_line2 + code_this_line3 + entryNext + ":\n";
+    }
+    case Kind::NON_IF:{
+        return non_if_stmt->DumpKoopa();
+    }
+    default:
+        return "MatchedStmt error\n";
+    }
+}
+
+string UnmatchedStmtAST::DumpKoopa() {
+    if(DEBUG) cout<<"UnmatchedStmt called"<<endl;
+    switch (kind)
+    {
+    case Kind::IF:{  // if expr ->stmt 否则跳过
+        string preIR_Code = exp->DumpKoopa();
+        string expStoreNum=exp->storeNum;
+        string entrySuccess="%entry" + to_string(GlobalCounter::GetInstance().GetNext());
+        string entryFail="%entry" + to_string(GlobalCounter::GetInstance().GetNext());
+
+        string code_this_line = "br " + expStoreNum + ", " + entrySuccess + ", " + entryFail + "\n";
+        string code_this_line2 = entrySuccess + ":\n" + stmt->DumpKoopa() + "jump "+ entryFail + "\n";
+        // TODO: 这里的entryFail + "\n"其实是有点问题的，没考虑到如果if后面没有语句的情况
+        return preIR_Code + code_this_line + code_this_line2 + entryFail + ":\n";
+    }
+    case Kind::IF_ELSE:{
+        string preIR_Code = exp->DumpKoopa();
+        string expStoreNum=exp->storeNum;
+        string entrySuccess="%entry" + to_string(GlobalCounter::GetInstance().GetNext());
+        string entryFail="%entry" + to_string(GlobalCounter::GetInstance().GetNext());
+        string entryNext="%entry" + to_string(GlobalCounter::GetInstance().GetNext()); // 结束了if lese的下一条指令
+        string code_this_line = "br " + expStoreNum + ", " 
+               + entrySuccess + ", " + entryFail + "\n";
+        string code_this_line2 = entrySuccess + ":\n" + 
+               matched_stmt->DumpKoopa() + "jump "+ entryNext + "\n";
+        string code_this_line3 = entryFail + ":\n" + 
+               unmatched_stmt->DumpKoopa() + "jump "+ entryNext + "\n";
+        return preIR_Code + code_this_line + code_this_line2 
+               + code_this_line3 + entryNext + ":\n";
+    }
+    default:
+        return "UnmatchedStmt error\n";
+    }
+}
+
+string NonIfStmtAST::DumpKoopa(){
+    if(DEBUG) cout<<"NonIfStmtAST called"<<endl;
     switch (kind)
     {
     case Kind::RET_EXP:{
-        std::string preIR_Code = exp->DumpKoopa();
+        string preIR_Code = exp->DumpKoopa();
         storeNum = exp->storeNum;
         return preIR_Code + "ret " + storeNum + "\n";
     }
     case Kind::LVALeqEXP:{
-        std::string preIR_Code = exp->DumpKoopa();
+        string preIR_Code = exp->DumpKoopa();
         LValAST* l_val_temp = dynamic_cast<LValAST*>(l_val.get());
         symbolTableNow->change(l_val_temp->ident, exp->storeNum);
         return preIR_Code;
@@ -151,45 +229,43 @@ std::string StmtAST::DumpKoopa(){
         return "";
     }
     case Kind::EXP:{
-        std::string preIR_Code = exp->DumpKoopa();
+        string preIR_Code = exp->DumpKoopa();
         // storeNum = exp->storeNum;
         return preIR_Code;
     }
     case Kind::RET:{
-        return "ret\n";
+        return "ret 0\n";
     }
     case Kind::BLOCK:{
         newSymbolTable();
-        std::string preIR_Code = block->DumpKoopa();
+        string preIR_Code = block->DumpKoopa();
         deleteSymbolTable();
         return preIR_Code;
     }
-    default:
-        return "StmtAST error\n";
     }
 }
 
-std::string LOrExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"LOrExpAST called"<<std::endl;
+string LOrExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"LOrExpAST called"<<endl;
     switch (kind)
     {
         case Kind::LAndExp:{
-            std::string preIR_Code = l_and_exp->DumpKoopa();
+            string preIR_Code = l_and_exp->DumpKoopa();
             storeNum = l_and_exp->storeNum;
             return preIR_Code;
         }
         case Kind::LOrExp_LAndExp:{
-            std::string preIR_Code = l_or_exp->DumpKoopa();
-            std::string preIR_Code2 = l_and_exp->DumpKoopa();
-            std::string storeNum1=l_or_exp->storeNum;
-            std::string storeNum2=l_and_exp->storeNum;
-            std::string v1,v2;
+            string preIR_Code = l_or_exp->DumpKoopa();
+            string preIR_Code2 = l_and_exp->DumpKoopa();
+            string storeNum1=l_or_exp->storeNum;
+            string storeNum2=l_and_exp->storeNum;
+            string v1,v2;
             v1=GetNext();
             v2=GetNext();
-            std::string code_this_line = v1 + " = ne " + storeNum1 + ", 0 \n";
-            std::string code_this_line2 = v2 + " = ne " + storeNum2 + ", 0 \n";
+            string code_this_line = v1 + " = ne " + storeNum1 + ", 0 \n";
+            string code_this_line2 = v2 + " = ne " + storeNum2 + ", 0 \n";
             storeNum = GetNext();
-            std::string code_this_line3=storeNum + " = or " + v1 + ", " + v2 + "\n";
+            string code_this_line3=storeNum + " = or " + v1 + ", " + v2 + "\n";
             return preIR_Code + preIR_Code2 + code_this_line + code_this_line2 + code_this_line3;
         }
         default:
@@ -197,95 +273,95 @@ std::string LOrExpAST::DumpKoopa(){
     }
 }
 
-std::string LAndExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"LAndExpAST called"<<std::endl;
+string LAndExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"LAndExpAST called"<<endl;
     switch(kind){
         case Kind::EqExp:{
-            std::string preIR_Code = eq_exp->DumpKoopa();
+            string preIR_Code = eq_exp->DumpKoopa();
             storeNum = eq_exp->storeNum;
             return preIR_Code;
         }
         case Kind::LAndExp_EqExp:{
-            std::string preIR_Code = l_and_exp->DumpKoopa();
-            std::string preIR_Code2 = eq_exp->DumpKoopa();
-            std::string storeNum1=l_and_exp->storeNum;
-            std::string storeNum2=eq_exp->storeNum;
-            std::string v1,v2;
+            string preIR_Code = l_and_exp->DumpKoopa();
+            string preIR_Code2 = eq_exp->DumpKoopa();
+            string storeNum1=l_and_exp->storeNum;
+            string storeNum2=eq_exp->storeNum;
+            string v1,v2;
             v1=GetNext();
             v2=GetNext();
-            std::string code_this_line = v1 + " = ne " + storeNum1 + ", 0 \n";
-            std::string code_this_line2 = v2 + " = ne " + storeNum2 + ", 0 \n";
+            string code_this_line = v1 + " = ne " + storeNum1 + ", 0 \n";
+            string code_this_line2 = v2 + " = ne " + storeNum2 + ", 0 \n";
             storeNum = GetNext();
-            std::string code_this_line3=storeNum + " = and " + v1 + ", " + v2 + "\n";
+            string code_this_line3=storeNum + " = and " + v1 + ", " + v2 + "\n";
             return preIR_Code + preIR_Code2 + code_this_line + code_this_line2 + code_this_line3;
         }
     }
 }
 
-std::string EqExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"EqExpAST called"<<std::endl;
+string EqExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"EqExpAST called"<<endl;
     switch(kind){
         case Kind::RelExp:{
-            std::string preIR_Code = rel_exp->DumpKoopa();
+            string preIR_Code = rel_exp->DumpKoopa();
             storeNum = rel_exp->storeNum;
             return preIR_Code;
         }
         case Kind::EqExp_EqEq_RelExp:{
-            std::string preIR_Code = eq_exp->DumpKoopa();
-            std::string preIR_Code2 = rel_exp->DumpKoopa();
-            std::string storeNum1=eq_exp->storeNum;
-            std::string storeNum2=rel_exp->storeNum;
+            string preIR_Code = eq_exp->DumpKoopa();
+            string preIR_Code2 = rel_exp->DumpKoopa();
+            string storeNum1=eq_exp->storeNum;
+            string storeNum2=rel_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = eq " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::EqExp_NotEq_RelExp:{
-            std::string preIR_Code = eq_exp->DumpKoopa();
-            std::string preIR_Code2 = rel_exp->DumpKoopa();
-            std::string storeNum1=eq_exp->storeNum;
-            std::string storeNum2=rel_exp->storeNum;
+            string preIR_Code = eq_exp->DumpKoopa();
+            string preIR_Code2 = rel_exp->DumpKoopa();
+            string storeNum1=eq_exp->storeNum;
+            string storeNum2=rel_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = ne " + storeNum1 + ", " + storeNum2 + "\n";
         }
     }
 }
 
-std::string RelExpAST::DumpKoopa(){
-    if(DEBUG) std::cout<<"RelExpAST called"<<std::endl;
+string RelExpAST::DumpKoopa(){
+    if(DEBUG) cout<<"RelExpAST called"<<endl;
     switch(kind){
         case Kind::AddExp:{
-            std::string preIR_Code = add_exp->DumpKoopa();
+            string preIR_Code = add_exp->DumpKoopa();
             storeNum = add_exp->storeNum;
             return preIR_Code;
         }
         case Kind::RelExp_LT_AddExp:{
-            std::string preIR_Code = rel_exp->DumpKoopa();
-            std::string preIR_Code2 = add_exp->DumpKoopa();
-            std::string storeNum1=rel_exp->storeNum;
-            std::string storeNum2=add_exp->storeNum;
+            string preIR_Code = rel_exp->DumpKoopa();
+            string preIR_Code2 = add_exp->DumpKoopa();
+            string storeNum1=rel_exp->storeNum;
+            string storeNum2=add_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = lt " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::RelExp_GT_AddExp:{
-            std::string preIR_Code = rel_exp->DumpKoopa();
-            std::string preIR_Code2 = add_exp->DumpKoopa();
-            std::string storeNum1=rel_exp->storeNum;
-            std::string storeNum2=add_exp->storeNum;
+            string preIR_Code = rel_exp->DumpKoopa();
+            string preIR_Code2 = add_exp->DumpKoopa();
+            string storeNum1=rel_exp->storeNum;
+            string storeNum2=add_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = gt " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::RelExp_LE_AddExp:{
-            std::string preIR_Code = rel_exp->DumpKoopa();
-            std::string preIR_Code2 = add_exp->DumpKoopa();
-            std::string storeNum1=rel_exp->storeNum;
-            std::string storeNum2=add_exp->storeNum;
+            string preIR_Code = rel_exp->DumpKoopa();
+            string preIR_Code2 = add_exp->DumpKoopa();
+            string storeNum1=rel_exp->storeNum;
+            string storeNum2=add_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = le " + storeNum1 + ", " + storeNum2 + "\n";
         }
         case Kind::RelExp_GE_AddExp:{
-            std::string preIR_Code = rel_exp->DumpKoopa();
-            std::string preIR_Code2 = add_exp->DumpKoopa();
-            std::string storeNum1=rel_exp->storeNum;
-            std::string storeNum2=add_exp->storeNum;
+            string preIR_Code = rel_exp->DumpKoopa();
+            string preIR_Code2 = add_exp->DumpKoopa();
+            string storeNum1=rel_exp->storeNum;
+            string storeNum2=add_exp->storeNum;
             storeNum = GetNext();
             return preIR_Code + preIR_Code2 + storeNum + " = ge " + storeNum1 + ", " + storeNum2 + "\n";
         }
@@ -293,7 +369,7 @@ std::string RelExpAST::DumpKoopa(){
 }
 
 
-std::string DeclAST::DumpKoopa(){
+string DeclAST::DumpKoopa(){
     if(DEBUG) cout<<"DeclAST called"<<endl;
     switch (kind)
     {
@@ -307,7 +383,7 @@ std::string DeclAST::DumpKoopa(){
   }
 
 
-std::string VarDefAST::DumpKoopa(){
+string VarDefAST::DumpKoopa(){
     if(DEBUG) cout<<"VarDefAST called"<<endl;
     switch (kind)
     {
