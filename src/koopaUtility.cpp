@@ -6,6 +6,7 @@ using namespace std;
 
 int tabLen=2;
 
+// 输出koopa_raw_value_tag_t对应的字符串
 string raw_value_tag(int tag){
     switch (tag)
     {
@@ -49,6 +50,7 @@ string raw_value_tag(int tag){
     }
 }
 
+// koopa_raw_value_kind_t结构包含koopa_raw_value_tag_t，所以raw_value_tag和raw_value_kind一样
 string raw_value_kind(int tag){
     switch (tag)
     {
@@ -135,7 +137,7 @@ string raw_binary_op(int op){
     }
 }
 
-string raw_type_tag(int tag){
+string raw_type_tag(int tag){ // koopa_raw_type_tag_t 就是koopa_raw_type_kind_t
     switch (tag)
     {
     case KOOPA_RTT_INT32:
@@ -154,7 +156,26 @@ string raw_type_tag(int tag){
     }
 }
 
-bool startsWith(const std::string& str, const std::string& prefix) {
+string raw_slice_item_kind(int kind){ // koopa_raw_slice_item_kind_t
+    switch (kind)
+    {
+    case KOOPA_RSIK_UNKNOWN:
+        return "UNKNOWN";
+    case KOOPA_RSIK_TYPE:
+        return "TYPE";
+    case KOOPA_RSIK_FUNCTION:
+        return "FUNCTION";
+    case KOOPA_RSIK_BASIC_BLOCK:
+        return "BASIC_BLOCK";
+    case KOOPA_RSIK_VALUE:
+        return "VALUE";
+    default:
+        printf("raw_slice_item_kind error\n");
+        return "raw_slice_item_kind error";
+    }
+}
+
+bool startsWith(const string& str, const string& prefix) {
     if (str.length() < prefix.length()) {
         return false; // str 比 prefix 短，不可能以 prefix 开头
     }
@@ -180,9 +201,11 @@ string processIR(string s){
 
     // 删除连着的jump和ret
     for(auto i=v.begin(); i!=v.end()-1; ){
-        if(startsWith(*i, "ret") && startsWith(*(i+1), "jump")){
-            i = v.erase(i+1);
-            continue;
+        if(startsWith(*i, "ret") ){
+            if(i+1!=v.end() && startsWith(*(i+1), "jump")){
+                i = v.erase(i+1);
+                continue;
+            }
         }
         i++;
     }
@@ -216,7 +239,7 @@ string processIR(string s){
             level--;
         }
         ret += string(level*tabLen, ' ');
-        if(!startsWith(*i, "%entry")&&!startsWith(*i, "fun")){
+        if(!startsWith(*i, "%entry")&& i+1!=v.end() &&!startsWith(*i, "fun")){
             ret += string(tabLen, ' ');
         }
         ret += *i + "\n";
@@ -237,4 +260,27 @@ void file_append(string s, const char* output){
   }
 }
 
+string processRISCV(string s){
+    vector<string> v;
+    istringstream iss(s);
+    string tmp;
+    while(getline(iss, tmp)){
+        v.push_back(trim(tmp));
+    }
+    for(auto i=v.begin(); i!=v.end(); i++){
+        if(startsWith(*i, "ret")){
+            v.insert(i, "addi sp, sp, 2000");
+            i++;
+        }
+    }
 
+    // 拼接代码，返回
+    string ret;
+    for(auto i=v.begin(); i!=v.end(); i++){
+        if(startsWith(*i, ".")){
+            ret += "  ";
+        }
+        ret += *i + "\n";
+    }
+    return ret;
+}

@@ -70,10 +70,15 @@ int main(int argc, const char *argv[]) {
   assert(!ret);
 
   // 输出解析得到的 AST, 其实就是个字符串
-  string s=ast->DumpKoopa();
-  // string s="fun @main(): i32 {\n%entry: \n%1 = mul 0, 3\n%2 = add 55, 5\n%3 = mul %1 , 7\n%4 = add %3, %1\nret %1\n}\n";
+  string s;
+  s=ast->DumpKoopa();
+  
+  // s="fun @main(): i32 {\n%entry: \n%1 = mul 0, 3\n%2 = add 55, 5\n%3 = mul %1 , 7\n%4 = add %3, %1\nret %1\n}\n";
+  // s="fun @main(): i32 {\n%entry: \n%1 = add 0, 3\n%2 = add 5, %1\nret %1\n}\n";
+  // s="fun @main(): i32 {\n%entry: \nret 0\n}\n";
 
   s = processIR(s);
+  
   if(strcmp(mode, "-koopa") == 0) {
     cout<<"--- koopa mode ---\n";
     cout<<s;
@@ -93,7 +98,8 @@ int main(int argc, const char *argv[]) {
     string rsicV_code;
     rsicV_code.reserve(1000);
     rsicV_code = "  .text\n";
-    Visit(raw, rsicV_code);
+    VisitIR(raw, rsicV_code);
+    rsicV_code = processRISCV(rsicV_code);
     cout<<endl<<rsicV_code<<endl;
     file_write(rsicV_code, output);
   }
