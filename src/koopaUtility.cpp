@@ -4,6 +4,7 @@
 #include<vector>
 using namespace std;
 
+int tabLen=2;
 
 string raw_value_tag(int tag){
     switch (tag)
@@ -188,11 +189,7 @@ string processIR(string s){
     
     // 如果没有return，在最后加上
     bool hasEntry = false, hasBr = false;
-    // int level=0;
     for(auto i=v.begin(); i!=v.end()-1/* 这里暂时假设了没有嵌套花括号 */; i++){
-        // if((*i).find("{") != string::npos){
-        //     level++;
-        // }
         if(startsWith(*i, "ret ")||startsWith(*i, "br ")||startsWith(*i, "jump ")){
             hasBr = true;
         }
@@ -213,12 +210,31 @@ string processIR(string s){
 
     // 把字符串拼接回一起
     string ret;
+    int level=0;
     for(auto i=v.begin(); i!=v.end(); i++){
+        if((*i).find("}") != string::npos){
+            level--;
+        }
+        ret += string(level*tabLen, ' ');
+        if(!startsWith(*i, "%entry")&&!startsWith(*i, "fun")){
+            ret += string(tabLen, ' ');
+        }
         ret += *i + "\n";
+        if((*i).find("{") != string::npos){
+            level++;
+        }
     }
     return ret;
 }
 
-
+void file_append(string s, const char* output){
+  ofstream file(output, ios::app);
+  if (file.is_open()) {
+        file << s <<endl;  // 将字符串 str 写入到文件中
+        file.close(); // 关闭文件
+  }else{
+    cout<<"Error: cannot open file "<<output<<endl;
+  }
+}
 
 

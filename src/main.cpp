@@ -98,7 +98,7 @@ int main(int argc, const char *argv[]) {
     file_write(rsicV_code, output);
   }
   else{
-    cout<<"--- error mode ---\n";
+    cout<<"--- mode error ---\n";
     return 0;
   }
   

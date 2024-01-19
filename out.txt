@@ -1,0 +1,30 @@
+-- The C compiler identification is GNU 9.4.0
+-- The CXX compiler identification is Clang 13.0.1
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/clang++
+-- Check for working CXX compiler: /usr/bin/clang++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Flex/Bison generated source file extension: .cpp
+-- Library directory: /opt/lib/native
+-- Include directory: /opt/include
+-- Found FLEX: /usr/bin/flex (found version "2.6.4") 
+-- Found BISON: /usr/bin/bison (found version "3.5.1") 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/tmprnw_7tew
+[ 18%] [BISON][Parser] Building parser with bison 3.5.1
+[ 18%] [FLEX][Lexer] Building scanner with flex 2.6.4
+Scanning dependencies of target compiler
+[ 36%] Building CXX object CMakeFiles/compiler.dir/src/IR2RISCV.cpp.o
+[ 36%] Building CXX object CMakeFiles/compiler.dir/src/GlobalCounter.cpp.o
+[ 45%] Building CXX object CMakeFiles/compiler.dir/src/SymbolTable.cpp.o
+[ 54%] Building CXX object CMakeFiles/compiler.dir/src/ast.cpp.o
+[ 63%] Building CXX object CMakeFiles/compiler.dir/src/koopaUtility.cpp.o

@@ -3,7 +3,10 @@
 #include <iostream>
 #include <variant>
 #include "debug.h"
+#include "GlobalCounter.h"
 using namespace std;
+
+extern int symbolTableLevel; // 当前符号表的层数
 
 enum class SymbolTableElementType {
   INT = 0
@@ -49,7 +52,7 @@ class SymbolTable{
         return father->find(name);
       }
       cout<<"Error: "<<name<<" not found"<<endl;
-      return "";
+      return "Error";
     }
 };
 

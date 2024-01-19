@@ -7,8 +7,8 @@
 #include "debug.h"
 #include <vector>
 #include <deque>
+#include "koopaUtility.h"
 using namespace std;
-
 
 
 // 所有 AST 的基类
@@ -42,7 +42,8 @@ class FuncDefAST : public BaseAST {
 
   string DumpKoopa() override {
     if(DEBUG) cout<<"FuncDefAST called"<<endl;
-    return "fun @" + ident + "(): " +func_type->DumpKoopa()+ " {\n%entry:\n" + block->DumpKoopa()+"}\n";
+    string ret = "fun @" + ident + "(): " +func_type->DumpKoopa()+ " {\n%entry:\n" + block->DumpKoopa()+"}\n";
+    return ret;
   }
 };
 
@@ -362,8 +363,11 @@ class ConstDefAST : public BaseAST {
   string DumpKoopa() override {
     if(DEBUG) cout<<"ConstDefAST called"<<endl;
     string code = const_init_val->DumpKoopa();
-    symbolTableNow->insert(ident,const_init_val->storeNum);
-    return code;
+    string identName = "@" + ident + to_string(GlobalCounter::GetInstance().GetNext());
+    string code_this_line = identName + " = alloc i32\n";
+    string code_this_line2 = "store " + const_init_val->storeNum + ", " + identName + "\n";
+    symbolTableNow->insert(ident, identName);
+    return code + code_this_line + code_this_line2;
   }
 };
 

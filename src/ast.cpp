@@ -58,9 +58,12 @@ string PrimaryExpAST::DumpKoopa(){
         }
         case Kind::LVal:{
             LValAST* l_val_temp = dynamic_cast<LValAST*>(l_val.get());
-            storeNum = symbolTableNow->find(l_val_temp->ident);
             string code =l_val->DumpKoopa();
-            return code;
+            
+            storeNum = GetNext();
+            string temp_id = symbolTableNow->find(l_val_temp->ident);
+            string code_this_line = storeNum + " = load " + temp_id + "\n";
+            return code + code_this_line;
         }
         default:
             return "PrimaryExpAST error\n";
@@ -161,11 +164,15 @@ string MatchedStmtAST::DumpKoopa() {
         string entrySuccess="%entry" + to_string(GlobalCounter::GetInstance().GetNext());
         string entryFail="%entry" + to_string(GlobalCounter::GetInstance().GetNext());
         string entryNext="%entry" + to_string(GlobalCounter::GetInstance().GetNext()); // 结束了if lese的下一条指令
-        string code_this_line = "br " + expStoreNum + ", " + entrySuccess + ", " + entryFail + "\n";
-        string code_this_line2 = entrySuccess + ":\n" + matched_stmt1->DumpKoopa() + "jump "+ entryNext;
-        string code_this_line3 = entryFail + ":\n" + matched_stmt2->DumpKoopa() + "jump "+ entryNext;
+        string code_this_line = "br " + expStoreNum + ", " 
+               + entrySuccess + ", " + entryFail + "\n";
+        string code_this_line2 = entrySuccess + ":\n" 
+               + matched_stmt1->DumpKoopa() + "jump "+ entryNext + "\n";
+        string code_this_line3 = entryFail + ":\n" 
+               + matched_stmt2->DumpKoopa() + "jump "+ entryNext + "\n";
         // TODO: 这里的entryFail + "\n"其实是有点问题的，没考虑到如果if后面没有语句的情况
-        return preIR_Code + code_this_line + code_this_line2 + code_this_line3 + entryNext + ":\n";
+        return preIR_Code + code_this_line + code_this_line2
+               + code_this_line3 + entryNext + ":\n";
     }
     case Kind::NON_IF:{
         return non_if_stmt->DumpKoopa();
@@ -222,8 +229,9 @@ string NonIfStmtAST::DumpKoopa(){
     case Kind::LVALeqEXP:{
         string preIR_Code = exp->DumpKoopa();
         LValAST* l_val_temp = dynamic_cast<LValAST*>(l_val.get());
-        symbolTableNow->change(l_val_temp->ident, exp->storeNum);
-        return preIR_Code;
+        // symbolTableNow->change(l_val_temp->ident, exp->storeNum);
+        string code_this_line = "store " + exp->storeNum + ", " + symbolTableNow->find(l_val_temp->ident) + "\n";
+        return preIR_Code + code_this_line;
     }
     case Kind::EMPTY:{
         return "";
@@ -388,13 +396,18 @@ string VarDefAST::DumpKoopa(){
     switch (kind)
     {
     case Kind::IDENT:{
-        symbolTableNow->insert(ident,"not init");
-        return "";
+        string identName = "@" + ident + to_string(GlobalCounter::GetInstance().GetNext());
+        string code_this_line = identName + " = alloc i32\n";
+        symbolTableNow->insert(ident, identName);
+        return code_this_line;
     }
     case Kind::IDENT_InitVal:{
         string code = init_val->DumpKoopa();
-        symbolTableNow->insert(ident,init_val->storeNum);
-        return code;
+        string identName = "@" + ident + to_string(GlobalCounter::GetInstance().GetNext());
+        string code_this_line = identName + " = alloc i32\n";
+        string code_this_line2 = "store " + init_val->storeNum + ", "+ identName + "\n";
+        symbolTableNow->insert(ident, identName);
+        return code + code_this_line + code_this_line2;
     }
     default:
         return "VarDefAST error\n";
