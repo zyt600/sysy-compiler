@@ -123,19 +123,19 @@ BlockItem
   ;
 
 Stmt
-  : NonIfStmt {
-    auto ast = new StmtAST(StmtAST::Kind::NONIF);
-    ast->non_if_stmt = unique_ptr<BaseAST>($1);
-    $$ = ast;
-  }
-  | MatchedStmt{
+  : MatchedStmt {
     auto ast = new StmtAST(StmtAST::Kind::MATCHED);
     ast->matched_stmt = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
-  | UnmatchedStmt{
+  | UnmatchedStmt {
     auto ast = new StmtAST(StmtAST::Kind::UNMATCHED);
     ast->unmatched_stmt = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | NonIfStmt {
+    auto ast = new StmtAST(StmtAST::Kind::NONIF);
+    ast->non_if_stmt = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
   ;
@@ -170,7 +170,7 @@ NonIfStmt
     ast->block = unique_ptr<BaseAST>($1);
     $$ = ast;
   }
-  | WHILE '(' Exp ')' Stmt {
+  | WHILE '(' Exp ')' MatchedStmt {
     auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::WHILE);
     ast->exp = unique_ptr<BaseAST>($3);
     ast->stmt = unique_ptr<BaseAST>($5);

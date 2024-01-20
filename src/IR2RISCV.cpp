@@ -117,7 +117,9 @@ void VisitIR(koopa_raw_value_t value, string &rsicV_code){
     case KOOPA_RVT_BRANCH:{
         if(DEBUG) cout<<"KOOPA_RVT_BRANCH"<<endl;
         koopa_raw_branch_t branch = value->kind.data.branch;
+        // TODO
         koopa_raw_value_t cond = branch.cond;
+
         // koopa_raw_basic_block_t true_bb = branch.true_bb;
         // koopa_raw_basic_block_t false_bb = branch.false_bb;
         // string code_this_time = loadRegister(cond, "a1");

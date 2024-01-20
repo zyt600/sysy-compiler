@@ -211,12 +211,12 @@ string processIR(string s){
     }
     
     // 如果没有return，在最后加上
-    bool hasEntry = false, hasBr = false;
+    // bool hasEntry = false, hasBr = false;
     for(auto i=v.begin(); i!=v.end()-1/* 这里暂时假设了没有嵌套花括号 */; i++){
         if(startsWith(*i, "ret ")||startsWith(*i, "br ")||startsWith(*i, "jump ")){
             if(i+1!=v.end() && !startsWith(*(i+1), "%entry") && !startsWith(*(i+1), "}")){
                 i = v.insert(i+1, "%entry"+to_string(GlobalCounter::GetInstance().GetNext())+":");
-                hasEntry=true;
+                // hasEntry=true;
             }
         }
         // else if(startsWith(*i, "%entry")){
@@ -228,6 +228,15 @@ string processIR(string s){
         //     hasBr = false;
         // }
     }
+
+    do{
+        auto i=v.end()-2;
+        if(startsWith(*i, "%entry4")){
+            v.erase(i);
+        }else{
+            break;
+        }
+    }while(1);
 
 
     // 把字符串拼接回一起
