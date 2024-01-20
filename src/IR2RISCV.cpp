@@ -114,6 +114,21 @@ void VisitIR(koopa_raw_value_t value, string &rsicV_code){
         }
         break;
     }
+    case KOOPA_RVT_BRANCH:{
+        if(DEBUG) cout<<"KOOPA_RVT_BRANCH"<<endl;
+        koopa_raw_branch_t branch = value->kind.data.branch;
+        koopa_raw_value_t cond = branch.cond;
+        // koopa_raw_basic_block_t true_bb = branch.true_bb;
+        // koopa_raw_basic_block_t false_bb = branch.false_bb;
+        // string code_this_time = loadRegister(cond, "a1");
+        // rsicV_code += code_this_time;
+        // rsicV_code+="  beqz a1, "+to_string(irSymbolTable.find(false_bb))+"\n";
+        // rsicV_code+="  j "+to_string(irSymbolTable.find(true_bb))+"\n";
+        break;
+    }
+    case KOOPA_RVT_JUMP:{
+
+    }
     default:
         cout<<"koopa_raw_value_t error:value->kind.tag: "
         <<raw_value_kind(value->kind.tag)<<endl;

@@ -214,7 +214,11 @@ string processIR(string s){
     bool hasEntry = false, hasBr = false;
     for(auto i=v.begin(); i!=v.end()-1/* 这里暂时假设了没有嵌套花括号 */; i++){
         if(startsWith(*i, "ret ")||startsWith(*i, "br ")||startsWith(*i, "jump ")){
-            hasBr = true;
+            if(i+1!=v.end() && !startsWith(*(i+1), "%entry") && !startsWith(*(i+1), "}")){
+                i = v.insert(i+1, "%entry"+to_string(GlobalCounter::GetInstance().GetNext())+":");
+                i++;
+                hasEntry=true;
+            }
         }
 
         if(startsWith(*i, "%entry")){
@@ -225,9 +229,6 @@ string processIR(string s){
             hasEntry = true;
             hasBr = false;
         }
-        // if((*i).find("}") != string::npos){
-        //     level--;
-        // }
     }
 
 

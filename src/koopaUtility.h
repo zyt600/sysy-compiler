@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include "GlobalCounter.h"
 using namespace std;
 
 string raw_value_tag(int tag);
