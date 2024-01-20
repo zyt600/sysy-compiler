@@ -1,7 +1,7 @@
 #include <iostream>
 #include "koopa.h"
 #include "koopaUtility.h"
-#include<vector>
+#include <vector>
 using namespace std;
 
 int tabLen=2;

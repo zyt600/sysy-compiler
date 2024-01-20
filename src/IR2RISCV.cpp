@@ -42,15 +42,17 @@ void VisitIR(koopa_raw_basic_block_t bb, string &rsicV_code){
 }
 
 void VisitIR(koopa_raw_value_t value, string &rsicV_code){
-    if(value->name)
-        cout<<value->name<<endl;
-    else
-        cout<<"value->name null"<<endl;
-    if(DEBUG) cout<<"Visit raw value"<<endl;
+    if(DEBUG) {
+        cout<<"Visit raw value ";
+        if(value->name)
+            cout<<"with name: "<<value->name<<endl;
+        else
+            cout<<"without name"<<endl;
+    }
     switch (value->kind.tag)
     {
     case KOOPA_RVT_RETURN:{ // Function return.
-        if(DEBUG) cout<<"  KOOPA_RVT_RETURN"<<endl;
+        if(DEBUG) cout<<"KOOPA_RVT_RETURN"<<endl;
         koopa_raw_return_t ret = value->kind.data.ret;
         koopa_raw_value_t ret_value = ret.value;
         // koopa_raw_value_t 就是 koopa_raw_value_data 的指针
@@ -58,21 +60,13 @@ void VisitIR(koopa_raw_value_t value, string &rsicV_code){
             rsicV_code+="  ret\n";
             break;
         }
-        if(ret_value->kind.tag==KOOPA_RVT_INTEGER){
-            int32_t int_val = ret_value->kind.data.integer.value;
-            rsicV_code+="  li a0, "+to_string(int_val)+"\n  ret\n";
-            break;
-        }else if(ret_value->kind.tag==KOOPA_RVT_BINARY&&irSymbolTable.exist(ret_value)){
-            rsicV_code+="  lw a0, "+to_string(irSymbolTable.find(ret_value))+"(sp)\n";
-            rsicV_code+="  ret\n";
-            break;
-        }
-        else{
-            cout<<"error raw_value_tag: "<<raw_value_tag(ret_value->kind.tag)<<endl;
-        }
+        string code_this_time = loadRegister(ret_value, "a0");
+        rsicV_code += code_this_time;
+        rsicV_code+="  ret\n";
         break;
     }
     case KOOPA_RVT_BINARY:{
+        if(DEBUG) cout<<"KOOPA_RVT_BINARY"<<endl;
         koopa_raw_binary_t binary = value->kind.data.binary;
         string code_this_time = VisitIR(binary, rsicV_code);
         rsicV_code += code_this_time;
@@ -80,7 +74,7 @@ void VisitIR(koopa_raw_value_t value, string &rsicV_code){
         break;
     }
     case KOOPA_RVT_INTEGER:{
-        if(DEBUG) cout<<"  KOOPA_RVT_INTEGER"<<endl;
+        if(DEBUG) cout<<"KOOPA_RVT_INTEGER"<<endl;
         koopa_raw_integer_t integer = value->kind.data.integer;
         int32_t int_val = integer.value;
         rsicV_code+="  li a0, "+to_string(int_val)+"\n";
@@ -90,6 +84,34 @@ void VisitIR(koopa_raw_value_t value, string &rsicV_code){
         if(DEBUG) cout<<"KOOPA_RVT_ALLOC"<<endl;
         koopa_raw_block_arg_ref_t alloc = value->kind.data.block_arg_ref;
         cout<<"index: "<<alloc.index<<endl;
+        cout<<"alloc store at: "<<irSymbolTable.find(value)<<endl;
+        break;
+    }
+    case KOOPA_RVT_LOAD:{
+        // 什么也不做？
+        if(DEBUG) cout<<"KOOPA_RVT_LOAD"<<endl;
+        koopa_raw_load_t load = value->kind.data.load;
+        koopa_raw_value_t src = load.src;
+        cout<<"src tag: "<<raw_value_tag(src->kind.tag)<<endl;
+        cout<<"load store at: "<<irSymbolTable.find(value)<<endl;
+        break;
+    }
+    case KOOPA_RVT_STORE:{
+        if(DEBUG) cout<<"KOOPA_RVT_STORE"<<endl;
+        koopa_raw_store_t store = value->kind.data.store;
+        cout<<"store value: "<<raw_value_tag(store.value->kind.tag)<<endl;
+        cout<<"store dst: "<<raw_value_tag(store.dest->kind.tag)<<endl;
+        // store.dest的tag99%是ALLOC
+
+        if(store.value->kind.tag==KOOPA_RVT_LOAD){
+            koopa_raw_load_t load = store.value->kind.data.load;
+            koopa_raw_value_t src = load.src;
+            irSymbolTable.change(store.dest, irSymbolTable.find(src));
+            cout<<"store value change to: "<<irSymbolTable.find(store.dest)<<endl;
+        }
+        else{
+            irSymbolTable.change(store.dest, irSymbolTable.find(store.value));
+        }
         break;
     }
     default:
@@ -101,6 +123,7 @@ void VisitIR(koopa_raw_value_t value, string &rsicV_code){
 
 // 计算二元表达式，把算出来的结果放在a1中，返回riscv代码
 string VisitIR(koopa_raw_binary_t binary, string &rsicV_code){
+    if(DEBUG) cout<<"Visit raw binary"<<endl;
     string code_this_time;
     koopa_raw_value_t lhs = binary.lhs, rhs=binary.rhs;
     /*
@@ -135,30 +158,9 @@ string VisitIR(koopa_raw_binary_t binary, string &rsicV_code){
     <<raw_slice_item_kind(binary.rhs->used_by.kind)<<"}"<<endl;
     }
     */
-    // 处理lhs和rhs
-    {
-    if(lhs->kind.tag==KOOPA_RVT_INTEGER){
-        int32_t int_val = lhs->kind.data.integer.value;
-        code_this_time+="  li a1, "+to_string(int_val)+"\n";
-    }else{
-        if(!irSymbolTable.exist(lhs)){
-            cout<<"lhs error"<<endl;
-        }else{
-            code_this_time+="  lw a1, "+to_string(irSymbolTable.find(lhs))+"(sp)\n";
-        }
-    }
 
-    if(rhs->kind.tag==KOOPA_RVT_INTEGER){
-        int32_t int_val = rhs->kind.data.integer.value;
-        code_this_time+="  li a2, "+to_string(int_val)+"\n";
-    }else{
-        if(!irSymbolTable.exist(rhs)){
-            cout<<"rhs error"<<endl;
-        }else{
-            code_this_time+="  lw a2, "+to_string(irSymbolTable.find(rhs))+"(sp)\n";
-        }
-    }
-    }
+    code_this_time+=loadRegister(lhs, "a1");
+    code_this_time+=loadRegister(rhs, "a2");
     
     switch (binary.op)
     {
@@ -227,3 +229,23 @@ string VisitIR(koopa_raw_binary_t binary, string &rsicV_code){
     }
     return code_this_time;
 }
+
+string loadRegister(koopa_raw_value_t value, string target){
+    switch (value->kind.tag)
+    {
+    case KOOPA_RVT_INTEGER:{
+        int32_t int_val = value->kind.data.integer.value;
+        return "li " + target + ", "+to_string(int_val)+"\n";
+    }
+    case KOOPA_RVT_LOAD:{
+        return "lw " + target + ", "+to_string(irSymbolTable.find(value->kind.data.load.src))+"(sp)\n";
+    }
+    case KOOPA_RVT_BINARY:{
+        return "lw " + target + ", "+to_string(irSymbolTable.find(value))+"(sp)\n";
+    }
+    default:
+        cout<<"loadRegister error"<<endl;
+        return "loadRegister error";
+    }
+}
+        
