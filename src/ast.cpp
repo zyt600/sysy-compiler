@@ -250,6 +250,15 @@ string NonIfStmtAST::DumpKoopa(){
         deleteSymbolTable();
         return preIR_Code;
     }
+    case Kind::WHILE:{
+        string entryCond="%entryCond"+ to_string(GlobalCounter::GetInstance().GetNext());
+        string entryBody="%entryBody"+ to_string(GlobalCounter::GetInstance().GetNext());
+        string entryNext="%entryNext"+ to_string(GlobalCounter::GetInstance().GetNext());
+        string exp_code = exp->DumpKoopa();
+        string stmt_code = stmt->DumpKoopa();
+        return "jump " + entryCond + "\n" + entryCond + ":\n" + exp_code + "br " + exp->storeNum + ", "+entryBody + ", " + entryNext 
+               + "\n" + entryBody + ":\n"  + stmt_code + "jump " + entryCond + "\n" + entryNext + ":\n";
+    }
     }
 }
 

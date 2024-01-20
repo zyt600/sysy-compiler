@@ -37,7 +37,7 @@ using namespace std;
 
 // lexer 返回的所有 token 种类的声明
 // 注意 IDENT 和 INT_CONST 会返回 token 的值, 分别对应 str_val 和 int_val
-%token INT RETURN GE LE EQ NE AND OR CONST IF ELSE
+%token INT RETURN GE LE EQ NE AND OR CONST IF ELSE WHILE
 %token <str_val> IDENT 
 %token <int_val> INT_CONST
 
@@ -168,6 +168,12 @@ NonIfStmt
   | Block {
     auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::BLOCK);
     ast->block = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | WHILE '(' Exp ')' Stmt {
+    auto ast = new NonIfStmtAST(NonIfStmtAST::Kind::WHILE);
+    ast->exp = unique_ptr<BaseAST>($3);
+    ast->stmt = unique_ptr<BaseAST>($5);
     $$ = ast;
   }
   ;

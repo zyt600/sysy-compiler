@@ -128,10 +128,11 @@ class NonIfStmtAST : public BaseAST {
     EMPTY, // 单纯只有一个分号
     EXP, // 单纯只有一个表达式，会被求值 (即存在副作用), 但所求的值会被丢弃
     RET, // 单纯只有一个 return;
-    BLOCK
+    BLOCK,
+    WHILE
   };
   Kind kind;
-  unique_ptr<BaseAST> exp, l_val, block;
+  unique_ptr<BaseAST> exp, l_val, block, stmt;
 
   string DumpKoopa() override ;
   NonIfStmtAST() = default;
