@@ -216,19 +216,17 @@ string processIR(string s){
         if(startsWith(*i, "ret ")||startsWith(*i, "br ")||startsWith(*i, "jump ")){
             if(i+1!=v.end() && !startsWith(*(i+1), "%entry") && !startsWith(*(i+1), "}")){
                 i = v.insert(i+1, "%entry"+to_string(GlobalCounter::GetInstance().GetNext())+":");
-                i++;
                 hasEntry=true;
             }
         }
-
-        if(startsWith(*i, "%entry")){
-            if(hasEntry&&!hasBr){ //这个基本块entry没有条件转移出口
-                i = v.insert(i, "ret");
-                i++;
-            }
-            hasEntry = true;
-            hasBr = false;
-        }
+        // else if(startsWith(*i, "%entry")){
+        //     if(hasEntry){ //这个基本块entry没有条件转移出口
+        //         i = v.insert(i, "ret");
+        //         i++;
+        //     }
+        //     hasEntry = true;
+        //     hasBr = false;
+        // }
     }
 
 
